@@ -6,11 +6,13 @@
     "start": "next start"
   },
   "dependencies": {
+    "@headlessui/react": "^2.1.8",
     "@heroicons/react": "^2.1.4",
     "@tailwindcss/forms": "^0.5.7",
     "@vercel/postgres": "^0.8.0",
     "bcrypt": "^5.1.1",
     "clsx": "^2.1.1",
+    "headlessui": "^0.0.0",
     "heroicons": "^2.1.5",
     "mongodb": "^6.9.0",
     "next": "15.0.0-canary.56",

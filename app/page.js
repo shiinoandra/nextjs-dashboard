@@ -3,17 +3,20 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Layout from "./components/Layout";
 import ModelCard from "./components/ModelCard.js";
+import ModelDetail from "./components/ModelDetail";
 import FilterPopout from "./components/FilterPopout.js";
 import { FunnelIcon } from "@heroicons/react/24/outline";
 
 const MODELS_PER_PAGE = 20; // Adjust this number as needed
 
 export default function Home() {
+  const [selectedModel, setSelectedModel] = useState(null)
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [showFilterPopout, setShowFilterPopout] = useState(false);
+  const [showModelDetail, setShowModelDetail] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [filters, setFilters] = useState({
     showFavorites: false,
@@ -27,6 +30,7 @@ export default function Home() {
     setModels([]);
     fetchModels();
   };
+
 
   const observer = useRef();
   const lastModelElementRef = useCallback(
@@ -58,11 +62,24 @@ export default function Home() {
       setError("Failed to load models. Please try again later.");
     } finally {
       setLoading(false);
+      //setShowModelDetail(true)
     }
   };
   useEffect(() => {
-    fetchModels();
+    fetchModels()
+    if (models.length > 0) {
+      setSelectedModel(models[10])
+      // models.forEach((model)=>
+      // {
+      //   if(model.version_id === 890194)
+      //   {
+      //     setSelectedModel(model);
+      //   }
+      // });
+      setShowModelDetail(true);
+    }
   }, [page]);
+
   // New function to handle hiding/unhiding models
   const handleModelVisibilityChange = (modelId, isHidden) => {
     setModels((prevModels) =>
@@ -72,6 +89,10 @@ export default function Home() {
     );
   };
 
+  const handleSelectedModel = (model) => {
+    setSelectedModel(model)
+  }
+
   // Filter out hidden models before rendering
   const visibleModels = models.filter(
     (model) => !model.isHidden || filters.showHidden
@@ -79,6 +100,7 @@ export default function Home() {
 
   return (
     <Layout>
+      <button onClick={() => setShowModelDetail(true)}>showdetail</button>
       <div className="mb-4 flex justify-end">
         <button
           onClick={() => setShowFilterPopout(!showFilterPopout)}
@@ -95,6 +117,12 @@ export default function Home() {
           onClose={() => setShowFilterPopout(false)}
         />
       )}
+      {showModelDetail && (
+        <ModelDetail
+          model={selectedModel}
+          onClose={() => setShowModelDetail(false)}
+        />
+      )}
       {error ? (
         <p className="text-center text-red-500">{error}</p>
       ) : (
@@ -102,14 +130,20 @@ export default function Home() {
           {visibleModels.map((model, index) => (
             <div
               key={model._id}
-              ref={index === visibleModels.length - 1 ? lastModelElementRef : null}
+              ref={
+                index === visibleModels.length - 1 ? lastModelElementRef : null
+              }
             >
-              <ModelCard 
-                model={model} 
+              <ModelCard
+                model={model}
                 filters={filters}
-                onVisibilityChange={(isHidden) => handleModelVisibilityChange(model._id, isHidden)}
+                onVisibilityChange={(isHidden) =>
+                  handleModelVisibilityChange(model._id, isHidden)
+                }
+                // handleSelectedModel={handleSelectedModel(selectedModel)}
+                // setShowModelDetail={setShowModelDetail}
               />
-            </div>    
+            </div>
           ))}
         </div>
       )}

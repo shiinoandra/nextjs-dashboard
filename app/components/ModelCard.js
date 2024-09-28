@@ -1,18 +1,27 @@
-import { HeartIcon as HeartIconOutline } from "@heroicons/react/24/outline";
+import { 
+  HeartIcon as HeartIconOutline,
+  ClockIcon,
+  CalendarDaysIcon,
+  ArrowDownIcon,
+  TrashIcon,
+ } from "@heroicons/react/24/outline";
 import {
   HeartIcon,
   EyeSlashIcon,
   EyeIcon,
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { useState,useMemo,useEffect } from "react";
+import Countdown from "react-countdown";
+import useSWR from "swr";
+
 
 export default function ModelCard({
   model,
   filters,
   onVisibilityChange,
-  handleSelectedModel,
-  setShowModelDetail,
+  onShowDetail,
+  dlQueue,
 }) {
   const [isUpdatingFav, setIsUpdatingFav] = useState(false);
   const [isUpdatingHidden, setIsUpdatingHidden] = useState(false);
@@ -20,6 +29,38 @@ export default function ModelCard({
   const [modelhidden, setHidden] = useState(model.hidden); // Local state for hidden status
   //const [filterhidden, setfilterHidden] = useState(filters["showHidden"]);
   const [isHidden, setIsHidden] = useState(model.isHidden);
+  const [isDownloading, setIsDownloading] = useState(model.flag);
+  const [isDownloaded, setIsDownloaded] = useState(model.downloaded);
+
+  const flask_url = "http://192.168.18.17:5000";
+
+  const fetcher = (...args) => fetch(...args).then((res) => res.json());
+  const { data: updatedModel, mutate } = useSWR(
+    `/api/models?id=${model._id}`, // Always fetch for each ModelCard when dlQueue changes
+    fetcher
+  );
+
+  useEffect(() => {
+    if (updatedModel) {
+      setIsDownloaded(updatedModel.model.downloaded);
+    }
+  }, [updatedModel]);
+
+  // Trigger mutation every time `dlQueue` changes (forces SWR to refetch)
+  useEffect(() => {
+    mutate();
+    if(dlQueue.some((item) => item._id === model._id)){
+      setIsDownloading(true);
+    }
+    else{
+      setIsDownloading(false);
+    }
+    // This will trigger SWR to refetch whenever `dlQueue` changes
+  }, [dlQueue, mutate]);
+
+  // const inQueue = useMemo(() => {
+  //   return dlQueue.some((item) => item._id === model._id);
+  // }, [dlQueue, model._id]);
 
   const badgeRule = {
     style: {
@@ -44,11 +85,24 @@ export default function ModelCard({
     },
   };
 
-  const showModelDetail = () =>{
-    //setShowModelDetail(false);
-    //handleSelectedModel(model);
-    //setShowModelDetail(true);
-  }
+  const showModelDetail = () => {
+    onShowDetail(model);
+  };
+
+  const handleDownload = async () => {
+    console.log(isDownloaded);
+    try {
+      setIsDownloading(true);
+      const res = await fetch(flask_url + "/download/new/" + model._id);
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      console.log(data);
+    } catch (error) {
+      console.error("Error:", error);
+      setIsDownloading(false);
+    }
+  };
+
   const handleUpdate = async (action) => {
     if (action == "fav") {
       //setIsUpdatingFav(true);
@@ -84,7 +138,6 @@ export default function ModelCard({
           setHidden(!modelhidden);
           setIsHidden(!modelhidden);
           onVisibilityChange(!modelhidden);
-          console.log(modelhidden);
           setIsUpdatingHidden(false);
         }
 
@@ -101,21 +154,62 @@ export default function ModelCard({
     }
   };
 
+  function actionButton() {
+    if (!isDownloaded) {
+      if (isDownloading) {
+        return (
+          <button
+            disabled
+            className="flex items-center space-x-1 bg-gray-400  text-white text-xs font-medium py-2 px-3 rounded-md transition-colors duration-300"
+          >
+            <Spinner />
+            <span>Downloading...</span>
+          </button>
+        );
+      } else {
+        if (Date.parse(model.early_access_end) > Date.now()) {
+          return (
+            <button className="flex items-center space-x-1 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors duration-300">
+              <CalendarDaysIcon className="h-4 w-4" />
+              <span>Schedule</span>
+            </button>
+          );
+        } else {
+          return (
+            <button
+              className="flex items-center space-x-1 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors duration-300"
+              onClick={() => handleDownload()}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              <span>Download</span>
+            </button>
+          );
+        }
+      }
+    } else {
+      return (
+        <button className="flex items-center space-x-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors duration-300">
+          <TrashIcon className="h-4 w-4" />
+          <span>Delete</span>
+        </button>
+      );
+    }
+  }
+
+  const cd_renderer = ({ days, hours, minutes }) => {
+    // Render a countdown
+    return (
+      <span>
+        {hours}d : {hours}h : {minutes}m
+      </span>
+    );
+  };
+
   if (isHidden && !filters.showHidden) {
     return null;
   }
 
   return (
-    //     <div
-    //   id={model._id}
-    //   className={
-    //     (model.early_access_end != null
-    //       ? "ring ring-4 ring-offset-0 ring-pink-500 "
-    //       : "") +
-    //     "flex flex-col h-full bg-white border border-slate-300 shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out rounded-lg w-72 h-48 mx-auto"
-    //   }
-    // ></div>
-
     <div className="bg-gray-100 border border-gray-300 rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg">
       {/* Image Section */}
       <div className="relative overflow-hidden bg-cover bg-no-repeat w-full h-72 ">
@@ -125,10 +219,21 @@ export default function ModelCard({
           alt={model.model_name}
           onClick={showModelDetail}
         />
-        {model.downloaded && (
+        {isDownloaded && (
           <div className="absolute top-0 right-0 bg-green-500 text-white text-s font-bold px-2 py-1 m-2 rounded">
-            Owned
+            Installed
           </div>
+        )}
+        {model.early_access_end != null && (
+          <span className="absolute top-0 right-0 bg-red-500 text-white text-sm font-bold px-2 py-2 m-2 rounded">
+            <span className="inline-flex items-center gap-2">
+              <ClockIcon className="w-6 h-6"></ClockIcon>
+              <Countdown
+                date={Date.parse(model.early_access_end)}
+                renderer={cd_renderer}
+              ></Countdown>
+            </span>
+          </span>
         )}
       </div>
 
@@ -139,26 +244,26 @@ export default function ModelCard({
             href={`https://civitai.com/models/${model.model_id}`}
             className="hover:text-indigo-600 transition-colors duration-300"
           >
-            {model.model_name? model.model_name:""}
+            {model.model_name ? model.model_name : ""}
           </a>
         </h2>
         <p className="text-sm text-blue-600 font-mono">
           {model.model_version} ({model.version_id})
         </p>
-        <div className="flex flex-wrap gap-1">
-          {
-            (model.tags && model.tags.length > 0) &&
+        <div className="flex flex-wrap gap-0">
+          {model.tags &&
+            model.tags.length > 0 &&
             model.tags.slice(0, 3).map((tag, index) => {
-            const badgeColor = badgeRule[tag] || badgeRule.def;
-            return (
-              <span
-                key={index}
-                className={`${badgeColor["bg"]} ${badgeColor["text"]} text-xs font-medium me-2 px-2.5 py-0.5 rounded border ${badgeColor["border"]}`}
-              >
-                {tag.toLowerCase()}
-              </span>
-            );
-          })}
+              const badgeColor = badgeRule[tag] || badgeRule.def;
+              return (
+                <span
+                  key={index}
+                  className={`${badgeColor["bg"]} ${badgeColor["text"]} text-xs w-16 truncate text-center font-medium me-2 px-2.5 py-0.5 rounded border ${badgeColor["border"]}`}
+                >
+                  {tag.toLowerCase()}
+                </span>
+              );
+            })}
         </div>
       </div>
 
@@ -192,10 +297,7 @@ export default function ModelCard({
             )}
           </button>
         </div>
-        <button className="flex items-center space-x-1 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors duration-300">
-          <ArrowDownTrayIcon className="h-4 w-4" />
-          <span>Download</span>
-        </button>
+        {actionButton()}
       </div>
     </div>
   );

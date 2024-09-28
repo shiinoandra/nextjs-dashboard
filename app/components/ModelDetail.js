@@ -1,68 +1,72 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import {
-  Dialog,
-  DialogBackdrop,
-  DialogPanel,
-  DialogTitle,
-  Tab,
-  TabGroup,
-  TabList,
-  TabPanel,
-  TabPanels,
+	Dialog,
+	DialogBackdrop,
+	DialogPanel,
+	DialogTitle,
+	Tab,
+	TabGroup,
+	TabList,
+	TabPanel,
+	TabPanels,
 } from "@headlessui/react";
 
 import {
-  LinkIcon,
-  TagIcon,
-  CheckCircleIcon,
-  MinusCircleIcon,
+	LinkIcon,
+	TagIcon,
+	CheckCircleIcon,
+	MinusCircleIcon,
 } from "@heroicons/react/24/solid";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
+	return classes.filter(Boolean).join(" ");
 }
 
-const ModelDetail = ({ model }) => {
-  const [open, setOpen] = useState(true);
-  const badgeRule = {
-    style: {
-      text: "text-green-800",
-      bg: "bg-green-400",
-      border: "border-green-400",
-    },
-    character: {
-      text: "text-red-800",
-      bg: "bg-red-300",
-      border: "border-red-400",
-    },
-    concept: {
-      text: "text-blue-800",
-      bg: "bg-blue-200",
-      border: "border-blue-400",
-    },
-    def: {
-      text: "text-black-800",
-      bg: "bg-gray-200",
-      border: "border-gray-400",
-    },
-  };
+const ModelDetail = ({ model,onClose }) => {
+	const [open, setOpen] = useState(true);
+	const badgeRule = {
+		style: {
+			text: "text-green-800",
+			bg: "bg-green-400",
+			border: "border-green-400",
+		},
+		character: {
+			text: "text-red-800",
+			bg: "bg-red-300",
+			border: "border-red-400",
+		},
+		concept: {
+			text: "text-blue-800",
+			bg: "bg-blue-200",
+			border: "border-blue-400",
+		},
+		def: {
+			text: "text-black-800",
+			bg: "bg-gray-200",
+			border: "border-gray-400",
+		},
+	};
 
-  const test_tags = [
-    "character",
-    "background",
-    "comcept",
-    "style",
-    "anime",
-    "girl",
-    "sexy",
-    "cartoon",
-    "manga",
-  ];
+	const test_tags = [
+		"character",
+		"background",
+		"comcept",
+		"style",
+		"anime",
+		"girl",
+		"sexy",
+		"cartoon",
+		"manga",
+	];
 
-  return (
-    <Dialog open={open} onClose={setOpen} className="relative z-10">
+	const copy_to_clipboard = (text) =>{
+		navigator.clipboard.writeText(text)
+	};
+
+	return (
+    <Dialog open={open} onClose={onClose} className="relative z-10">
       <DialogBackdrop
         transition
         className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
@@ -84,28 +88,28 @@ const ModelDetail = ({ model }) => {
                       className="rounded-lg shadow-md mb-4 m-auto w-fit h-fit bg-cover"
                     ></img>
                   </div>
-                  <div className="w-full md:w-1/2 px-4 text-left flex flex-col space-y-4">
+                  <div className="w-full md:w-1/2 px-4 text-left flex flex-col gap-y-4">
                     <div>
                       <DialogTitle
                         as="h2"
-                        class="text-2xl font-bold leading-6 text-grey-900"
+                        className="text-2xl font-bold leading-6 text-grey-900 mb-2"
                       >
                         {`${model.model_name}`}
                       </DialogTitle>
                     </div>
-                    <div class="flex items-center space-x-4">
-                      <h2 class="text-sm title-font font-semibold text-blue-500 tracking-widest">
+                    <div className="flex items-center space-x-4 mb-2">
+                      <h2 className="text-sm title-font font-semibold text-blue-500 tracking-widest">
                         {model.model_version}
                       </h2>
                       {/* start of status row */}
                       {model.downloaded ? (
-                        <span class="inline-flex items-center bg-green-200 text-green-800 ring-2 ring-green-600 text-xs font-medium px-2.5 py-0.5 rounded-full ">
-                          <span class="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
+                        <span className="inline-flex items-center bg-green-200 text-green-800 ring-2 ring-green-600 text-xs font-medium px-2.5 py-0.5 rounded-full ">
+                          <span className="w-2 h-2 me-1 bg-green-500 rounded-full"></span>
                           Installed
                         </span>
                       ) : (
-                        <span class="inline-flex items-center bg-slate-200 text-slate-800 ring-2 ring-slate-400 text-xs font-medium px-2.5 py-0.5 rounded-full ">
-                          <span class="w-2 h-2 me-1 bg-slate-600 rounded-full"></span>
+                        <span className="inline-flex items-center bg-slate-200 text-slate-800 ring-2 ring-slate-400 text-xs font-medium px-2.5 py-0.5 rounded-full ">
+                          <span className="w-2 h-2 me-1 bg-slate-600 rounded-full"></span>
                           Not Installed
                         </span>
                       )}
@@ -113,17 +117,20 @@ const ModelDetail = ({ model }) => {
                     {/* end of status row */}
 
                     {/* button for model id and version id */}
-                    <div class="inline-flex rounded-md shadow-sm " role="group">
+                    <div
+                      className="inline-flex rounded-md shadow-sm mb-2 "
+                      role="group"
+                    >
                       <button
                         type="button"
-                        class="inline-flex items-center px-4 py-2 text-sm font-medium  bg-transparent border border-gray-900 rounded-s-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white"
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium  bg-transparent border border-gray-900 rounded-s-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white"
                       >
                         <LinkIcon className="h-4 w-4" />
                         {model.model_id}
                       </button>
                       <button
                         type="button"
-                        class="inline-flex items-center px-4 py-2 text-sm font-medium  bg-transparent border border-gray-900 rounded-e-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white"
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium  bg-transparent border border-gray-900 rounded-e-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white"
                       >
                         <TagIcon className="h-4 w-4" />
                         {model.version_id}
@@ -131,9 +138,7 @@ const ModelDetail = ({ model }) => {
                     </div>
                     {/* end of model id and verson id row */}
                     {/* published date */}
-                    <h2 class="text-sm title-font text-grey-500 tracking-widest">
-                      Published :{model.published_date}
-                    </h2>
+
                     <TabGroup>
                       <TabList className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
                         <Tab
@@ -179,26 +184,156 @@ const ModelDetail = ({ model }) => {
                       <TabPanels>
                         <TabPanel>
                           {/* description div */}
-                          <div
-                            class="h-max-72 max-w-fit list-disc mt-4 pl-4 text-sm overflow-y-auto"
-                            dangerouslySetInnerHTML={{
-                              __html: model.model_description,
-                            }}
-                          ></div>
-                        </TabPanel>
-                        <TabPanel>
-                          <div class="h-max-72 max-w-fit list-disc mt-4 pl-4 text-sm overflow-y-auto">
-                            test
+                          <div className="h-72 max-w-full list-disc mt-4 pl-4 text-sm overflow-y-auto overflow-x-auto rounded">
+                            <div
+                              className="max-w-72"
+                              dangerouslySetInnerHTML={{
+                                __html: model.model_description,
+                              }}
+                            ></div>
+                            {model.version_info && model.version_info != "" ? (
+                              <div>
+                                <p className="flex items-center text-sm font-semibold">
+                                  Version Info:
+                                </p>
+                                <div
+                                  dangerouslySetInnerHTML={{
+                                    __html: model.version_description,
+                                  }}
+                                ></div>
+                              </div>
+                            ) : (
+                              <div />
+                            )}
                           </div>
                         </TabPanel>
-                        <TabPanel>Content 3</TabPanel>
+                        <TabPanel>
+                          <div className="h-72 max-w-full list-disc mt-4 pl-4 text-sm overflow-y-auto">
+                            <div className="flex justify-between text-gray-600 border-b-2 border-gray-300">
+                              <p className="flex items-start text-sm font-semibold">
+                                Author
+                              </p>
+                              <div className="flex items-center">
+                                <p className="p-1 mr-4 text-sm rounded">
+                                  {model.author}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex justify-between text-gray-600 border-b-2 border-gray-300">
+                              <p className="flex items-center text-sm font-semibold">
+                                Created
+                              </p>
+                              <div className="flex items-center">
+                                <p className="p-1 mr-4 text-sm rounded">
+                                  {model.created_date}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex justify-between text-gray-600 border-b-2 border-gray-300">
+                              <p className="flex items-center text-sm font-semibold">
+                                Published
+                              </p>
+                              <div className="flex items-center">
+                                <p className="p-1 mr-4 text-sm rounded">
+                                  {model.published_date}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex justify-between text-gray-600 border-b-2 border-gray-300">
+                              <p className="flex items-center text-sm font-semibold">
+                                Base Model
+                              </p>
+                              <div className="flex items-center">
+                                <p className="p-1 mr-4 text-sm rounded">
+                                  {model.base_model}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex justify-between text-gray-600 border-b-2 border-gray-300">
+                              <p className="flex items-center text-sm font-semibold">
+                                SHA256
+                              </p>
+                              <div className="flex items-center w-60">
+                                <p
+                                  onClick={() =>
+                                    copy_to_clipboard(model.file_hash["SHA256"])
+                                  }
+                                  className="p-1 mr-4 text-sm overflow-hidden truncate underline underline-offset-1 cursor-pointer hover:color-sky-500"
+                                >
+                                  {model.file_hash["SHA256"]}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex justify-between text-gray-600 border-b-2 border-gray-300">
+                              <p className="flex items-center text-sm font-semibold">
+                                Filename
+                              </p>
+                              <div className="flex items-center w-max-60">
+                                <p
+                                  onClick={() =>
+                                    copy_to_clipboard(model.file_name)
+                                  }
+                                  className="p-1 mr-4 text-sm overflow-hidden truncate cursor-pointer hover:color-sky-500"
+                                >
+                                  {" "}
+                                  {model.file_name}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 ">
+                              <div>
+                                <ul class="max-w-md space-y-1 text-slate-900 list-inside  mt-8">
+                                  <li class="flex text-md items-center">
+                                    {model.nsfw ? (
+                                      <CheckCircleIcon class="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
+                                    ) : (
+                                      <MinusCircleIcon class="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
+                                    )}
+                                    NSFW
+                                  </li>
+                                  <li class="flex text-md items-center">
+                                    {model.minor ? (
+                                      <CheckCircleIcon class="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
+                                    ) : (
+                                      <MinusCircleIcon class="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
+                                    )}
+                                    Minor
+                                  </li>
+                                </ul>
+                              </div>
+                              <div>
+                                <ul class="max-w-md space-y-1 text-slate-900 list-inside  mt-8">
+                                  <li class="flex text-md items-center">
+                                    {model.poi ? (
+                                      <CheckCircleIcon class="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
+                                    ) : (
+                                      <MinusCircleIcon class="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
+                                    )}
+                                    Person of Interest
+                                  </li>
+                                  <li class="flex text-md items-center">
+                                    {model.minor ? (
+                                      <CheckCircleIcon class="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
+                                    ) : (
+                                      <MinusCircleIcon class="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
+                                    )}
+                                    Minor
+                                  </li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </TabPanel>
+                        <TabPanel>
+                          <div className="h-72 max-w-full list-disc mt-4 pl-4 text-sm overflow-y-auto"></div>
+                        </TabPanel>
                       </TabPanels>
                     </TabGroup>
 
                     {/* begin tags section */}
                     <div className="mb-6">
                       <h3 className="text-lg font-semibold mb-2">Tags:</h3>
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-x-1 gap-y-2">
                         {test_tags &&
                           test_tags.length > 0 &&
                           test_tags.map((tag, index) => {
@@ -253,15 +388,15 @@ const ModelDetail = ({ model }) => {
                       </button>
                     </div>
                     {/* <div>
-                      <h3 className="text-lg font-semibold mb-2">
-                        Key Features:
-                      </h3>
-                      <ul className="list-disc list-inside">
-                        {model.tags.map((tag, index) => (
-                          <li key={index}>{tag}</li>
-                        ))}
-                      </ul>
-                    </div> */}
+											<h3 className="text-lg font-semibold mb-2">
+												Key Features:
+											</h3>
+											<ul className="list-disc list-inside">
+												{model.tags.map((tag, index) => (
+													<li key={index}>{tag}</li>
+												))}
+											</ul>
+										</div> */}
                   </div>
                 </div>
               </div>
@@ -269,7 +404,7 @@ const ModelDetail = ({ model }) => {
             <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
               >
                 Deactivate
@@ -277,7 +412,7 @@ const ModelDetail = ({ model }) => {
               <button
                 type="button"
                 data-autofocus
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
               >
                 Cancel

@@ -1,14 +1,21 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, mutate, useCallback } from "react";
 import Layout from "./components/Layout";
 import ModelCard from "./components/ModelCard.js";
 import ModelDetail from "./components/ModelDetail";
 import FilterPopout from "./components/FilterPopout.js";
-import { FunnelIcon } from "@heroicons/react/24/outline";
+import {
+  FunnelIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/24/outline";
 import TestComponent from  "./components/Test";
 import useSWR from "swr";
-
+import { Popover } from "@headlessui/react";
+import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 
 const MODELS_PER_PAGE = 20; // Adjust this number as needed
 
@@ -19,6 +26,7 @@ export default function Home() {
   // const [loading, setLoading] = useState(true);
   // const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
+  const [totalPages,setTotalPages] = useState(1);
   const [showFilterPopout, setShowFilterPopout] = useState(false);
   const [showModelDetail, setShowModelDetail] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -29,18 +37,39 @@ export default function Home() {
     showDownloaded: true,
   })
 
+  const [sortOpt, setSortOpt]=useState({text:"Published",key:"published_date"});
+  const [sortOrder, setSortOrder] = useState(-1);
 
-  const handleFilterChange = () => {
-    setPage(1);
-    setModels([]);
-    setHasMore(true);
-    // fetchModels();
+  const [inputValue, setInputValue] = useState("");
+  const [timer, setTimer] = useState(null);
+  const [searchWords, setSearchWords] = useState("");
+
+
+
+  const searchChanged = (e) => {
+    setInputValue(e.target.value);
+
+    clearTimeout(timer);
+
+    const newTimer = setTimeout(() => {
+      setSearchWords(inputValue);
+    }, 500);
+
+    setTimer(newTimer);
   };
+
+  const handleEnterSearch =(e)=> {
+    if(e.key==="Enter")
+    {
+      setSearchWords(inputValue)
+    }
+  }
 
   const getModelUrl = useCallback(() => {
     if (!hasMore) return null;
-    return `/api/models?page=${page}&limit=${MODELS_PER_PAGE}&showHidden=${filters.showHidden}&showDownloaded=${filters.showDownloaded}&favOnly=${filters.showFavorites}`;
-  }, [page, filters, hasMore]);
+    return `/api/models?page=${page}&limit=${MODELS_PER_PAGE}&showHidden=${filters.showHidden}&showDownloaded=${filters.showDownloaded}&favOnly=${filters.showFavorites}&sortBy=${sortOpt.key}&order=${sortOrder}&search=${searchWords}`;
+  }, [page,filters,sortOpt,sortOrder,searchWords
+  ]);
 
   const fetcher = (...args) => fetch(...args).then((res) => res.json());
   const {
@@ -53,28 +82,46 @@ export default function Home() {
     data: queueData,
     error: queueError,
     isLoading: queueLoading,
-  } = useSWR("/api/download/", fetcher, {
-    refreshInterval: 2000,
-  });
+  } = useSWR("/api/download/", fetcher, { refreshInterval:2000 });
 
+  const paginationInfo = useMemo(() => {
+    const maxPageButtons = 7;
+    let startPage = Math.max(1, page - Math.floor(maxPageButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
 
+    if (endPage - startPage + 1 < maxPageButtons) {
+      startPage = Math.max(1, endPage - maxPageButtons + 1);
+    }
 
+    return {
+      startPage,
+      endPage,
+      maxPageButtons,
+    };
+  }, [page, totalPages]);
 
-
-  const observer = useRef();
-  const lastModelElementRef = useCallback(
-    (node) => {
-      if (modelLoading) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setPage((prevPage) => prevPage + 1);
-        }
-      });
-      if (node) observer.current.observe(node);
-    },
-    [modelLoading, hasMore]
-  );
+    const sortOptions = [
+      {text:"Published",key:"published_date"},
+      {text:"Created",key:"created_date"},
+      {text:"Model ID",key:"model_id"},
+      {text:"Version ID",key:"version_id"},
+      {text:"Model Name",key:"model_name"},
+      {text:"Version Name",key:"version_name"},
+    ];
+  // const observer = useRef();
+  // const lastModelElementRef = useCallback(
+  //   (node) => {
+  //     if (modelLoading) return;
+  //     if (observer.current) observer.current.disconnect();
+  //     observer.current = new IntersectionObserver((entries) => {
+  //       if (entries[0].isIntersecting && hasMore) {
+  //         setPage((prevPage) => prevPage + 1);
+  //       }
+  //     });
+  //     if (node) observer.current.observe(node);
+  //   },
+  //   [modelLoading, hasMore]
+  // );
 
   // const fetchModels = async () => {
   //   try {
@@ -111,30 +158,16 @@ export default function Home() {
 
   useEffect(() => {
     if (modelData && modelData.models) {
-      console.log("Model data:", modelData.models);
-      setModels((prevModels) => {
-        const newModels = modelData.models.filter(
-          (newModel) => !prevModels.some((model) => model._id === newModel._id)
-        );
-        return [...prevModels, ...newModels];
-      });
-      setHasMore(modelData.hasMore);
+      setModels(modelData.models);
+      setTotalPages(Math.ceil(modelData.totalCount / MODELS_PER_PAGE));
     }
   }, [modelData]);
+
 
   useEffect(() => {
     if (queueData && queueData.queue) {
       console.log("Queue data:", queueData.queue);
       setDlQueue(queueData.queue);
-    if (modelData && modelData.models) {
-      setModels((prevModels) => {
-        const newModels = modelData.models.filter(
-          (newModel) =>
-            !prevModels.some((model) => model._id === newModel._id)
-        );
-        return [...prevModels, ...newModels];
-      });
-    }
     }
   }, [queueData]);
 
@@ -161,23 +194,259 @@ export default function Home() {
     setShowModelDetail(true);
 
   }
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    window.scrollTo(0, 0);
+  };
+
+  const handleFilterChange = () => {
+    setPage(1);
+    setModels([]);
+    //setHasMore(true);
+    // fetchModels();
+  };
+
+  const handleSortingChange = (_sortKey,_sortText) =>{
+    const _sortOpt = {};
+    _sortOpt["key"] = _sortKey; // Dynamically set the sort field and order
+    _sortOpt["text"] = _sortText; // Default secondary sorting by _id
+    setSortOpt(_sortOpt);
+  }
+
+  const handleOrderChange = (_sortOrder) => {
+    setSortOrder(_sortOrder);
+    setPage(1);
+  };
+
 
   // Filter out hidden models before rendering
   const visibleModels = models.filter(
     (model) => !model.isHidden || filters.showHidden
   );
 
+  const renderPagination = () => {
+    const { startPage, endPage } = paginationInfo;
+    const pageNumbers = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(
+        <a
+        key={i}
+        aria-current="page"
+        onClick={() => handlePageChange(i)}
+        className={` ${i=== page
+          ? "relative z-10 inline-flex items-center bg-indigo-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          : "relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+        }`}
+        >
+        {i}
+      </a>
+
+      );
+    }
+      return (
+        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-6 sm:px-6">
+          <div className="flex flex-1 justify-between sm:hidden">
+            <a
+              href="#"
+              className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Previous
+            </a>
+            <a
+              href="#"
+              className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Next
+            </a>
+          </div>
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing
+                <span className="font-medium m-2">
+                  {(page - 1) * MODELS_PER_PAGE + 1}
+                </span>
+                to
+                <span className="font-medium m-2">
+                  {(page - 1) * MODELS_PER_PAGE + MODELS_PER_PAGE}
+                </span>
+                of
+                {modelData && (
+                  <span className="font-medium m-2">
+                    {modelData.totalCount}
+                  </span>
+                )}
+                results
+              </p>
+            </div>
+            <div>
+              <nav
+                className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                aria-label="Pagination"
+              >
+                <a
+                  href="#"
+                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                >
+                  <span className="sr-only">Previous</span>
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </a>
+
+                {pageNumbers}
+                <a
+                  href="#"
+                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                >
+                  <span className="sr-only">Next</span>
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </a>
+              </nav>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
   return (
     <Layout>
-      <div className="mb-4 flex justify-end">
-        <button
-          onClick={() => setShowFilterPopout(!showFilterPopout)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center"
-        >
-          <FunnelIcon className="h-5 w-5 mr-2" />
-          Filter
-        </button>
+      <div className="relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
+        <div className="grid place-items-center h-full w-12 text-gray-300">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
+        <input
+          className="peer h-full shadow-md w-full outline-none text-sm text-gray-700 pr-2"
+          type="text"
+          value={inputValue}
+          onChange={searchChanged}
+          onKeyDown={handleEnterSearch}
+          id="search"
+          placeholder="Search something.."
+        />
       </div>
+      <div className="grid grid-cols-2 pb-8 pt-4 sm:pt-4 sm:pb-4 gap-2">
+        <div className="flex justify-start gap-6">
+          <Popover className="relative">
+            <Popover.Button
+              id="dropdownDefault"
+              data-dropdown-toggle="dropdown"
+              className="inline-flex min-h-[3rem] items-center justify-between rounded-md bg-indigo-500 px-4 py-2 text-white gap-2"
+              type="button"
+            >
+              <ChevronDownIcon className="w-6 h-6 mr-2" />
+              <span>Sort</span>
+              <span>:</span>
+              <span>{sortOpt.text}</span>
+            </Popover.Button>
+            <Popover.Panel className="absolute z-10 mt-3 w-72 max-w-md transform px-0 sm:px-0 lg:max-w-3xl">
+              <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5">
+                {sortOptions.map((opt) => (
+                  <div
+                    className="relative flex bg-stone-100 cursor-pointer items-center  hover:bg-stone-300 border-b-2 border-stone-200"
+                    key={opt.key}
+                    onClick={() => handleSortingChange(opt.key, opt.text)}
+                  >
+                    <a className="flex items-center p-4 rounded-lg transition duration-150 ease-in-out  focus:outline-none focus-visible:ring font-medium text-sm text-stone-900  focus-visible:ring-orange-500/50">
+                      <div>{opt.text}</div>
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </Popover.Panel>
+          </Popover>
+          <Popover className="relative">
+            <Popover.Button
+              id="dropdownDefault"
+              data-dropdown-toggle="dropdown"
+              className="min-h-[3rem] items-center justify-between rounded-md bg-indigo-500 px-4 py-2 text-white inline-flex gap-2"
+              type="button"
+            >
+              <ChevronDownIcon className="w-6 h-6 mr-2" />
+              <span>Order</span>
+              <span>:</span>
+              <span>
+                {sortOrder == -1 ? (
+                  <ArrowDownIcon className="w-4 h-4" />
+                ) : (
+                  <ArrowUpIcon className="w-4 h-4" />
+                )}
+              </span>
+            </Popover.Button>
+            <Popover.Panel className="absolute z-10 mt-3 w-72 max-w-md transform px-0 sm:px-0 lg:max-w-3xl">
+              <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5">
+                <div
+                  className="relative flex bg-stone-100 cursor-pointer items-center  hover:bg-stone-300 border-b-2 border-stone-200"
+                  onClick={() => setSortOrder(-1)}
+                >
+                  <a className="flex items-center p-4 rounded-lg transition duration-150 ease-in-out  focus:outline-none focus-visible:ring font-medium text-sm text-stone-900  focus-visible:ring-orange-500/50">
+                    <div>Descending</div>
+                  </a>
+                </div>
+                <div
+                  className="relative flex bg-stone-100 cursor-pointer items-center  hover:bg-stone-300 border-b-2 border-stone-200"
+                  onClick={() => setSortOrder(1)}
+                >
+                  <a className="flex items-center p-4 rounded-lg transition duration-150 ease-in-out  focus:outline-none focus-visible:ring font-medium text-sm text-stone-900  focus-visible:ring-orange-500/50">
+                    <div>Ascending</div>
+                  </a>
+                </div>
+              </div>
+            </Popover.Panel>
+          </Popover>
+        </div>
+        <div className="flex justify-end">
+          <button
+            id="dropdownDefault"
+            data-dropdown-toggle="dropdown"
+            className="inline-flex min-h-[3rem] items-center justify-between rounded-md bg-indigo-500 px-4 py-2 text-white gap-2"
+            onClick={() => setShowFilterPopout(!showFilterPopout)}
+            type="button"
+          >
+            <FunnelIcon className="w-6 h-6 mr-2" />
+            <span>Filter</span>
+          </button>
+        </div>
+      </div>
+
       {showFilterPopout && (
         <FilterPopout
           filters={filters}
@@ -193,14 +462,16 @@ export default function Home() {
       )}
       {modelError ? (
         <p className="text-center text-red-500">{error}</p>
+      ) : modelLoading ? (
+        <p className="text-center mt-4">Loading data...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[2048px]:grid-cols-6 min-[2560px]:grid-cols-7 gap-4">
-          {visibleModels.map((model, index) => (
+          {visibleModels.map((model) => (
             <div
               key={model._id}
-              ref={
-                index === visibleModels.length - 1 ? lastModelElementRef : null
-              }
+              // ref={
+              //   index === visibleModels.length - 1 ? lastModelElementRef : null
+              // }
             >
               <ModelCard
                 model={model}
@@ -208,14 +479,14 @@ export default function Home() {
                 onVisibilityChange={(isHidden) =>
                   handleModelVisibilityChange(model._id, isHidden)
                 }
-                onShowDetail={(model)=> handleSelectedModel(model)}
-                dlQueue= {DlQueue}
+                onShowDetail={(model) => handleSelectedModel(model)}
+                dlQueue={DlQueue}
               />
             </div>
           ))}
         </div>
       )}
-      {modelLoading && <p className="text-center mt-4">Loading more models...</p>}
+      {renderPagination()}
     </Layout>
   );
 }

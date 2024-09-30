@@ -4,24 +4,22 @@ import clientPromise from "../../../lib/mongodb";
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = (searchParams.get("id"));
+    const id = searchParams.get("id");
     if (id) {
       const modelId = id;
 
       // Fetch the individual model by its ID
       const client = await clientPromise;
+      client.on("commandStarted", (event) => console.debug(event));
+      client.on("commandSucceeded", (event) => console.debug(event));
+      client.on("commandFailed", (event) => console.debug(event));
       const db = client.db("sd_model_new");
 
       // Find the model by ObjectId
-      const model = await db
-        .collection("lora_index")
-        .findOne({ _id:modelId });
+      const model = await db.collection("lora_index").findOne({ _id: modelId });
 
       if (!model) {
-        return NextResponse.json(
-          { error: "Model not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Model not found" }, { status: 404 });
       }
       return NextResponse.json({ model });
     }
@@ -30,6 +28,10 @@ export async function GET(request) {
     const showHidden = searchParams.get("showHidden") || true;
     const showDownloaded = searchParams.get("showDownloaded") || true;
     const favOnly = searchParams.get("favOnly") || false;
+    const sortOpt = searchParams.get("sortBy") || "published_date";
+    const sortOrder = searchParams.get("order") || -1;
+    const searchWords = searchParams.get("search") || "";
+    const regexSearch = new RegExp(searchWords, "i");
 
     const showDownloadedFilter =
       showDownloaded === "true"
@@ -46,12 +48,41 @@ export async function GET(request) {
         ? { favourite: true }
         : { favourite: { $in: [true, false] } };
 
-    // Combine all filters into a single object
-    const filterMap = {
-      ...showDownloadedFilter,
-      ...showHiddenFilter,
-      ...favOnlyFilter,
+    const searchWordsFilter = {
+      "$or": [
+        { model_name: { $regex: regexSearch } },
+        { model_version: { $regex:regexSearch } },
+        { file_name: { $regex:regexSearch } },
+        { author: { $regex:regexSearch } },
+        { model_description: { $regex:regexSearch } },
+        { version_description: { $regex:regexSearch } },
+        { tags: { $regex:regexSearch } },
+        { activation_text: { $regex:regexSearch } },
+      ],
     };
+
+    // Combine all filters into a single object
+    let filterMap={};
+    if(searchWords==="")
+    {
+      filterMap = {
+        ...showDownloadedFilter,
+        ...showHiddenFilter,
+        ...favOnlyFilter,
+      };
+    }
+    else
+    {
+      filterMap = {
+        ...searchWordsFilter,
+        ...showDownloadedFilter,
+        ...showHiddenFilter,
+        ...favOnlyFilter,
+      };
+    }
+    const sortOptions = {};
+    sortOptions[sortOpt] = sortOrder; // Dynamically set the sort field and order
+    sortOptions["_id"] = -1; // Default secondary sorting by _id
 
     const skip = (page - 1) * limit;
 
@@ -61,7 +92,7 @@ export async function GET(request) {
     const models = await db
       .collection("lora_index")
       .find(filterMap)
-      .sort({ published_date: -1 })
+      .sort(sortOptions)
       .skip(skip)
       .limit(limit)
       .toArray();

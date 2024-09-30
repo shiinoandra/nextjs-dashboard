@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from "react";
+
 export default function Layout({ children }) {
   return (
     <div className="flex h-screen bg-gray-100">
@@ -10,15 +12,8 @@ export default function Layout({ children }) {
         </ul>
       </nav> */}
       <main className="flex-1 p-8">
-        <div className="mb-8">
-          <input
-            type="text"
-            placeholder="Search models, #tags, or @users"
-            className="w-full p-3 border rounded-lg shadow-sm bg-white"
-          />
-        </div>
         {children}
       </main>
     </div>
-  )
+  );
 }

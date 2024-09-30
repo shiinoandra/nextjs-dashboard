@@ -11,7 +11,7 @@ import {
   EyeIcon,
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/solid";
-import { useState,useMemo,useEffect } from "react";
+import { useState,useMemo,useEffect,useRef } from "react";
 import Countdown from "react-countdown";
 import useSWR from "swr";
 
@@ -33,11 +33,16 @@ export default function ModelCard({
   const [isDownloaded, setIsDownloaded] = useState(model.downloaded);
 
   const flask_url = "http://192.168.18.17:5000";
+  const prevQueueRef = useRef(dlQueue);
+
 
   const fetcher = (...args) => fetch(...args).then((res) => res.json());
+
   const { data: updatedModel, mutate } = useSWR(
     `/api/models?id=${model._id}`, // Always fetch for each ModelCard when dlQueue changes
-    fetcher
+    fetcher,{ revalidateIfStale: false,
+  revalidateOnFocus: false,
+  revalidateOnReconnect: false}
   );
 
   useEffect(() => {
@@ -46,17 +51,26 @@ export default function ModelCard({
     }
   }, [updatedModel]);
 
-  // Trigger mutation every time `dlQueue` changes (forces SWR to refetch)
+
   useEffect(() => {
-    mutate();
-    if(dlQueue.some((item) => item._id === model._id)){
+    const wasInQueue = prevQueueRef.current.some(
+      (item) => item._id === model._id
+    );
+    const isInQueue = dlQueue.some((item) => item._id === model._id);
+    if(isInQueue){
       setIsDownloading(true);
     }
     else{
       setIsDownloading(false);
     }
-    // This will trigger SWR to refetch whenever `dlQueue` changes
-  }, [dlQueue, mutate]);
+
+    if ((wasInQueue && !isInQueue) || (!wasInQueue && isInQueue)) {
+      mutate(); // Re-fetch model status
+    }
+
+    // Update the ref to store the latest queue
+    prevQueueRef.current = dlQueue;
+  }, [dlQueue, model._id, mutate]);
 
   // const inQueue = useMemo(() => {
   //   return dlQueue.some((item) => item._id === model._id);
@@ -212,9 +226,9 @@ export default function ModelCard({
   return (
     <div className="bg-gray-100 border border-gray-300 rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out hover:shadow-lg">
       {/* Image Section */}
-      <div className="relative overflow-hidden bg-cover bg-no-repeat w-full h-72 ">
+      <div className="relative overflow-hidden bg-cover bg-no-repeat w-full aspect-[7/9]">
         <img
-          className="m-auto w-full h-full object-cover hover:object-scale-down"
+          className="m-auto w-full h-full object-cover "
           src={model.image_url}
           alt={model.model_name}
           onClick={showModelDetail}
@@ -247,7 +261,7 @@ export default function ModelCard({
             {model.model_name ? model.model_name : ""}
           </a>
         </h2>
-        <p className="text-sm text-blue-600 font-mono">
+        <p className="text-sm text-blue-600 font-mono overflow-hidden truncate">
           {model.model_version} ({model.version_id})
         </p>
         <div className="flex flex-wrap gap-0">

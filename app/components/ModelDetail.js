@@ -256,11 +256,11 @@ const ModelDetail = ({ model,onClose }) => {
                               <div className="flex items-center w-60">
                                 <p
                                   onClick={() =>
-                                    copy_to_clipboard(model.file_hash["SHA256"])
+                                    copy_to_clipboard(model.file_hash ? model.file_hash["SHA256"] : "")
                                   }
                                   className="p-1 mr-4 text-sm overflow-hidden truncate underline underline-offset-1 cursor-pointer hover:color-sky-500"
                                 >
-                                  {model.file_hash["SHA256"]}
+                                  {model.file_hash? model.file_hash["SHA256"] : ""}
                                 </p>
                               </div>
                             </div>
@@ -282,40 +282,40 @@ const ModelDetail = ({ model,onClose }) => {
                             </div>
                             <div className="grid grid-cols-2 ">
                               <div>
-                                <ul class="max-w-md space-y-1 text-slate-900 list-inside  mt-8">
-                                  <li class="flex text-md items-center">
+                                <ul className="max-w-md space-y-1 text-slate-900 list-inside  mt-8">
+                                  <li className="flex text-md items-center">
                                     {model.nsfw ? (
-                                      <CheckCircleIcon class="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
+                                      <CheckCircleIcon className="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
                                     ) : (
-                                      <MinusCircleIcon class="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
+                                      <MinusCircleIcon className="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
                                     )}
                                     NSFW
                                   </li>
-                                  <li class="flex text-md items-center">
+                                  <li className="flex text-md items-center">
                                     {model.minor ? (
-                                      <CheckCircleIcon class="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
+                                      <CheckCircleIcon className="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
                                     ) : (
-                                      <MinusCircleIcon class="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
+                                      <MinusCircleIcon className="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
                                     )}
                                     Minor
                                   </li>
                                 </ul>
                               </div>
                               <div>
-                                <ul class="max-w-md space-y-1 text-slate-900 list-inside  mt-8">
-                                  <li class="flex text-md items-center">
+                                <ul className="max-w-md space-y-1 text-slate-900 list-inside  mt-8">
+                                  <li className="flex text-md items-center">
                                     {model.poi ? (
-                                      <CheckCircleIcon class="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
+                                      <CheckCircleIcon className="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
                                     ) : (
-                                      <MinusCircleIcon class="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
+                                      <MinusCircleIcon className="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
                                     )}
                                     Person of Interest
                                   </li>
-                                  <li class="flex text-md items-center">
+                                  <li className="flex text-md items-center">
                                     {model.minor ? (
-                                      <CheckCircleIcon class="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
+                                      <CheckCircleIcon className="w-6 h-6 me-2 text-green-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-green-400"></CheckCircleIcon>
                                     ) : (
-                                      <MinusCircleIcon class="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
+                                      <MinusCircleIcon className="w-6 h-6 me-2 text-red-500 rounded-full flex-shrink-0 outline outline-2 outline-offset-0 outline-red-400"></MinusCircleIcon>
                                     )}
                                     Minor
                                   </li>

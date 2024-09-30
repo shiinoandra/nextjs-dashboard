@@ -256,6 +256,7 @@ export default function ModelCard({
         <h2 className="text-lg font-semibold text-gray-900 line-clamp-1">
           <a
             href={`https://civitai.com/models/${model.model_id}`}
+            target="_blank"
             className="hover:text-indigo-600 transition-colors duration-300"
           >
             {model.model_name ? model.model_name : ""}

@@ -166,7 +166,6 @@ export default function Home() {
 
   useEffect(() => {
     if (queueData && queueData.queue) {
-      console.log("Queue data:", queueData.queue);
       setDlQueue(queueData.queue);
     }
   }, [queueData]);
@@ -335,7 +334,33 @@ export default function Home() {
 
   return (
     <Layout>
+      <h1 className="text-2xl font-extrabold text-gray-800">
+        Browse Models
+      </h1>
       <div className="relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
+        {/* search and show menu */}
+        <button
+          data-drawer-target="default-sidebar"
+          data-drawer-toggle="default-sidebar"
+          aria-controls="default-sidebar"
+          type="button"
+          className="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+        >
+          <span className="sr-only">Open sidebar</span>
+          <svg
+            className="w-6 h-6"
+            aria-hidden="true"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              clip-rule="evenodd"
+              fill-rule="evenodd"
+              d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
+            ></path>
+          </svg>
+        </button>
         <div className="grid place-items-center h-full w-12 text-gray-300">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -352,7 +377,6 @@ export default function Home() {
             />
           </svg>
         </div>
-
         <input
           className="peer h-full shadow-md w-full outline-none text-sm text-gray-700 pr-2"
           type="text"
@@ -363,16 +387,18 @@ export default function Home() {
           placeholder="Search something.."
         />
       </div>
-      <div className="grid grid-cols-2 pb-8 pt-4 sm:pt-4 sm:pb-4 gap-2">
-        <div className="flex justify-start gap-6">
+      {/* sort and order */}
+
+      <div className="grid grid-cols-1 pb-4 pt-4 sm:pt-4 sm:pb-8 gap-2 sm:grid-cols-10">
+        <div className="sm:grid sm:grid-cols-2 grid-cols-1 sm:col-span-7 sm:justify-start gap-x-2 sm:w-fit w-full">
           <Popover className="relative">
             <Popover.Button
               id="dropdownDefault"
               data-dropdown-toggle="dropdown"
-              className="inline-flex min-h-[3rem] items-center justify-between rounded-md bg-indigo-500 px-4 py-2 text-white gap-2"
+              className="inline-flex min-h-[3rem] w-full sm:w-fit items-center justify-start sm:justify-between rounded-md bg-stone-100 text-gray-900 font-semibold sm:font-normal sm:bg-indigo-500 px-4 py-2 sm:text-white gap-2"
               type="button"
             >
-              <ChevronDownIcon className="w-6 h-6 mr-2" />
+              <ChevronDownIcon className="w-6 h-6" />
               <span>Sort</span>
               <span>:</span>
               <span>{sortOpt.text}</span>
@@ -397,10 +423,10 @@ export default function Home() {
             <Popover.Button
               id="dropdownDefault"
               data-dropdown-toggle="dropdown"
-              className="min-h-[3rem] items-center justify-between rounded-md bg-indigo-500 px-4 py-2 text-white inline-flex gap-2"
+              className="inline-flex min-h-[3rem] w-full sm:w-fit items-center justify-start sm:justify-between rounded-md bg-stone-100 text-gray-900 font-semibold sm:font-normal sm:bg-indigo-500 px-4 py-2 sm:text-white gap-2"
               type="button"
             >
-              <ChevronDownIcon className="w-6 h-6 mr-2" />
+              <ChevronDownIcon className="w-6 h-6" />
               <span>Order</span>
               <span>:</span>
               <span>
@@ -433,11 +459,11 @@ export default function Home() {
             </Popover.Panel>
           </Popover>
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-center sm:col-span-3 sm:justify-end">
           <button
             id="dropdownDefault"
             data-dropdown-toggle="dropdown"
-            className="inline-flex min-h-[3rem] items-center justify-between rounded-md bg-indigo-500 px-4 py-2 text-white gap-2"
+            className="inline-flex min-h-[3rem] w-full sm:w-max items-center bg-stone-100 text-gray-900 font-semibold sm:font-light justify-start sm:justify-between rounded-md sm:bg-indigo-500 px-4 py-2 sm:text-white gap-2"
             onClick={() => setShowFilterPopout(!showFilterPopout)}
             type="button"
           >
@@ -465,7 +491,7 @@ export default function Home() {
       ) : modelLoading ? (
         <p className="text-center mt-4">Loading data...</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[2048px]:grid-cols-6 min-[2560px]:grid-cols-7 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 min-[2048px]:grid-cols-6 min-[2560px]:grid-cols-7 gap-4">
           {visibleModels.map((model) => (
             <div
               key={model._id}

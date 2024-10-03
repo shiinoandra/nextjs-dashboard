@@ -1,20 +1,20 @@
-import { 
+import {
   HeartIcon as HeartIconOutline,
   ClockIcon,
   CalendarDaysIcon,
   ArrowDownIcon,
   TrashIcon,
- } from "@heroicons/react/24/outline";
+} from "@heroicons/react/24/outline";
 import {
   HeartIcon,
   EyeSlashIcon,
   EyeIcon,
   ArrowDownTrayIcon,
+  CalendarIcon,
 } from "@heroicons/react/24/solid";
-import { useState,useMemo,useEffect,useRef } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Countdown from "react-countdown";
 import useSWR from "swr";
-
 
 export default function ModelCard({
   model,
@@ -31,18 +31,22 @@ export default function ModelCard({
   const [isHidden, setIsHidden] = useState(model.isHidden);
   const [isDownloading, setIsDownloading] = useState(model.flag);
   const [isDownloaded, setIsDownloaded] = useState(model.downloaded);
+  const [isScheduled, setisScheduled] = useState(model.flag);
+  const [isUpdatingSchedule, setIsUpdatingSchedule] = useState(false);
 
   const flask_url = "http://192.168.18.17:5000";
   const prevQueueRef = useRef(dlQueue);
-
 
   const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
   const { data: updatedModel, mutate } = useSWR(
     `/api/models?id=${model._id}`, // Always fetch for each ModelCard when dlQueue changes
-    fetcher,{ revalidateIfStale: false,
-  revalidateOnFocus: false,
-  revalidateOnReconnect: false}
+    fetcher,
+    {
+      revalidateIfStale: false,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
   );
 
   useEffect(() => {
@@ -51,17 +55,15 @@ export default function ModelCard({
     }
   }, [updatedModel]);
 
-
   useEffect(() => {
     const wasInQueue = prevQueueRef.current.some(
       (item) => item._id === model._id
     );
     const isInQueue = dlQueue.some((item) => item._id === model._id);
-    if(isInQueue){
-      setIsDownloading(true);
-    }
-    else{
-      setIsDownloading(false);
+    if (isInQueue) {
+      setIsDownloading("dl");
+    } else {
+      setIsDownloading("");
     }
 
     if ((wasInQueue && !isInQueue) || (!wasInQueue && isInQueue)) {
@@ -104,31 +106,36 @@ export default function ModelCard({
   };
 
   const handleDownload = async () => {
-    console.log(isDownloaded);
     try {
-      setIsDownloading(true);
+      setIsDownloading("dl");
       const res = await fetch(flask_url + "/download/new/" + model._id);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       console.log(data);
     } catch (error) {
       console.error("Error:", error);
-      setIsDownloading(false);
+      setIsDownloading("");
     }
   };
 
   const handleUpdate = async (action) => {
     if (action == "fav") {
-      //setIsUpdatingFav(true);
+      setIsUpdatingFav(true);
       var bodyData = JSON.stringify({
         id: model._id,
         updatedData: { favourite: !favourite },
       });
     } else if (action == "hide") {
-      //setIsUpdatingHidden(true);
+      setIsUpdatingHidden(true);
       var bodyData = JSON.stringify({
         id: model._id,
         updatedData: { hidden: !modelhidden },
+      });
+    } else if (action == "schedule") {
+      setIsUpdatingSchedule(true);
+      var bodyData = JSON.stringify({
+        id: model._id,
+        updatedData: { flag: "sched" },
       });
     }
     try {
@@ -154,38 +161,52 @@ export default function ModelCard({
           onVisibilityChange(!modelhidden);
           setIsUpdatingHidden(false);
         }
+        if (action == "schedule") {
+          setisScheduled("sched");
+          setIsUpdatingSchedule(false);
+        }
 
         // Optionally update the parent component
       } else {
         console.error("Failed to update model");
         setIsUpdatingFav(false);
         setIsUpdatingHidden(false);
+        setIsUpdatingSchedule(false);
       }
     } catch (error) {
       console.error("Error updating model:", error);
       setIsUpdatingFav(false);
       setIsUpdatingHidden(false);
+      setIsUpdatingSchedule(false);
     }
   };
 
   function actionButton() {
     if (!isDownloaded) {
-      if (isDownloading) {
+      if (isDownloading === "dl") {
         return (
-          <button
-            disabled
-            className="flex items-center space-x-1 bg-gray-400  text-white text-xs font-medium py-2 px-3 rounded-md transition-colors duration-300"
-          >
+          <button className="flex items-center space-x-1 bg-gray-400  text-white text-xs font-medium py-2 px-3 rounded-md transition-colors duration-300">
             <Spinner />
             <span>Downloading...</span>
           </button>
         );
       } else {
         if (Date.parse(model.early_access_end) > Date.now()) {
-          return (
-            <button className="flex items-center space-x-1 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors duration-300">
+          return isScheduled != "sched" ? (
+            <button
+              onClick={() => handleUpdate("schedule")}
+              className="flex items-center space-x-1 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors duration-300"
+            >
               <CalendarDaysIcon className="h-4 w-4" />
               <span>Schedule</span>
+            </button>
+          ) : (
+            <button
+              disabled
+              className="flex items-center space-x-1 bg-gray-400  text-white text-xs font-medium py-2 px-3 rounded-md transition-colors duration-300"
+            >
+              <CalendarIcon className="h-4 w-4" />
+              <span>Scheduled</span>
             </button>
           );
         } else {

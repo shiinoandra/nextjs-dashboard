@@ -14,7 +14,7 @@ export async function GET(request) {
       {
       queue = await db
         .collection("lora_index")
-        .find({ flag: { $ne: "" } })
+        .find({$or:[{flag:"dl"},{flag:"que"}]})
         .project({ _id: 1, model_id: 1, version_id: 1, flag: 1 })
         .toArray();
       }

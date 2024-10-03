@@ -123,6 +123,7 @@ const ModelDetail = ({ model,onClose }) => {
                     >
                       <button
                         type="button"
+                        onClick={() => copy_to_clipboard(model.model_id)}
                         className="inline-flex items-center px-4 py-2 text-sm font-medium  bg-transparent border border-gray-900 rounded-s-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white"
                       >
                         <LinkIcon className="h-4 w-4" />
@@ -130,6 +131,7 @@ const ModelDetail = ({ model,onClose }) => {
                       </button>
                       <button
                         type="button"
+                        onClick={() => copy_to_clipboard(model.version_id)}
                         className="inline-flex items-center px-4 py-2 text-sm font-medium  bg-transparent border border-gray-900 rounded-e-lg hover:bg-gray-900 hover:text-white focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white"
                       >
                         <TagIcon className="h-4 w-4" />
@@ -256,11 +258,17 @@ const ModelDetail = ({ model,onClose }) => {
                               <div className="flex items-center w-60">
                                 <p
                                   onClick={() =>
-                                    copy_to_clipboard(model.file_hash ? model.file_hash["SHA256"] : "")
+                                    copy_to_clipboard(
+                                      model.file_hash
+                                        ? model.file_hash["SHA256"]
+                                        : ""
+                                    )
                                   }
                                   className="p-1 mr-4 text-sm overflow-hidden truncate underline underline-offset-1 cursor-pointer hover:color-sky-500"
                                 >
-                                  {model.file_hash? model.file_hash["SHA256"] : ""}
+                                  {model.file_hash
+                                    ? model.file_hash["SHA256"]
+                                    : ""}
                                 </p>
                               </div>
                             </div>

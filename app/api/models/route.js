@@ -10,9 +10,6 @@ export async function GET(request) {
 
       // Fetch the individual model by its ID
       const client = await clientPromise;
-      client.on("commandStarted", (event) => console.debug(event));
-      client.on("commandSucceeded", (event) => console.debug(event));
-      client.on("commandFailed", (event) => console.debug(event));
       const db = client.db("sd_model_new");
 
       // Find the model by ObjectId

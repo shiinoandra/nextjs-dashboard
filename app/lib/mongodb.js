@@ -16,9 +16,6 @@ if (!process.env.MONGODB_URI) {
 if (process.env.NODE_ENV === 'development') {
   if (!global._mongoClientPromise) {
     client = new MongoClient(uri, options);
-    client.on("commandStarted", (event) => console.debug(event));
-    client.on("commandSucceeded", (event) => console.debug(event));
-    client.on("commandFailed", (event) => console.debug(event));
     global._mongoClientPromise = client.connect();
   }
   clientPromise = global._mongoClientPromise;

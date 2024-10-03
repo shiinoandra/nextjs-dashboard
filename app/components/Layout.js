@@ -16,9 +16,10 @@ export default function Layout({ children }) {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Mobile menu button */}
       <button
-        onClick={toggleSidebar}
+        onClick={() =>
+          toggleSidebar()
+        }
         className="fixed top-4 left-4 z-50 min-[1150px]:hidden p-2 rounded-md bg-gray-800 text-white"
         aria-label="Toggle sidebar"
       >

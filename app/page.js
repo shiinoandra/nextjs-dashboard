@@ -12,12 +12,11 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
 } from "@heroicons/react/24/outline";
-import TestComponent from  "./components/Test";
 import useSWR from "swr";
 import { Popover } from "@headlessui/react";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 
-const MODELS_PER_PAGE = 20; // Adjust this number as needed
+const MODELS_PER_PAGE = 21; // Adjust this number as needed
 
 export default function Home() {
   const [selectedModel, setSelectedModel] = useState(null)
@@ -194,9 +193,21 @@ export default function Home() {
 
   }
   const handlePageChange = (newPage) => {
-    setPage(newPage);
+    console.log(newPage);
+    setPage(parseInt(newPage));
     window.scrollTo(0, 0);
   };
+
+  function handleGotoPage(e){
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    for (var [key, value] of formData.entries()) { 
+      if(key==="gotoinput")
+        handlePageChange(parseInt(value));
+    }
+  }
 
   const handleFilterChange = () => {
     setPage(1);
@@ -244,7 +255,7 @@ export default function Home() {
     }
       return (
         <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-6 sm:px-6">
-          <div className="flex flex-1 justify-between sm:hidden">
+          <div className="flex flex-1 justify-between min-[900px]:hidden">
             <a
               href="#"
               className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -258,9 +269,9 @@ export default function Home() {
               Next
             </a>
           </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+          <div className=" hidden min-[900px]:flex min-[900px]:flex-1 min-[900px]:items-center min-[900px]:justify-between">
             <div>
-              <p className="text-sm text-gray-700">
+              <p className="py-4 text-sm text-gray-800">
                 Showing
                 <span className="font-medium m-2">
                   {(page - 1) * MODELS_PER_PAGE + 1}
@@ -278,6 +289,26 @@ export default function Home() {
                 results
               </p>
             </div>
+            <form method="post" onSubmit={handleGotoPage}>
+              <div className="inline-flex">
+                <div className="relative flex items-center  bg-white overflow-hidden">
+                  <input
+                    className="w-24 px-2 py-2 peer h-full border-2 focus-within:shadow-md border-gray-400 hover:border-indigo-600 text-sm font-normal text-gray-700 pr-2"
+                    type="text"
+                    name="gotoinput"
+                    id="gotopage"
+                    placeholder="Go to page"
+                  />
+                </div>
+                <button
+                  className="bg-indigo-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+                  type="submit"
+                >
+                  Go
+                </button>
+              </div>
+            </form>
+
             <div>
               <nav
                 className="isolate inline-flex -space-x-px rounded-md shadow-sm"
@@ -337,48 +368,10 @@ export default function Home() {
       <h1 className="text-2xl font-extrabold text-gray-800">
         Browse Models
       </h1>
-      <div className="relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
+      <div className="mt-8 mb-4 relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
         {/* search and show menu */}
-        <button
-          data-drawer-target="default-sidebar"
-          data-drawer-toggle="default-sidebar"
-          aria-controls="default-sidebar"
-          type="button"
-          className="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-        >
-          <span className="sr-only">Open sidebar</span>
-          <svg
-            className="w-6 h-6"
-            aria-hidden="true"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              clip-rule="evenodd"
-              fill-rule="evenodd"
-              d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-            ></path>
-          </svg>
-        </button>
-        <div className="grid place-items-center h-full w-12 text-gray-300">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-        </div>
         <input
-          className="peer h-full shadow-md w-full outline-none text-sm text-gray-700 pr-2"
+          className="px-6 py-4 peer h-full shadow-md w-full outline-none text-sm font-semibold text-gray-700 pr-2"
           type="text"
           value={inputValue}
           onChange={searchChanged}
@@ -491,7 +484,7 @@ export default function Home() {
       ) : modelLoading ? (
         <p className="text-center mt-4">Loading data...</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 min-[2048px]:grid-cols-6 min-[2560px]:grid-cols-7 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 min-[2048px]:grid-cols-6 min-[2560px]:grid-cols-7 gap-4">
           {visibleModels.map((model) => (
             <div
               key={model._id}

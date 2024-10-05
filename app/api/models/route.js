@@ -27,6 +27,8 @@ export async function GET(request) {
     const favOnly = searchParams.get("favOnly") || false;
     const sortOpt = searchParams.get("sortBy") || "published_date";
     const sortOrder = searchParams.get("order") || -1;
+    const nsfw = searchParams.get("nsfw") || false;
+
     const searchWords = searchParams.get("search") || "";
     const regexSearch = new RegExp(searchWords, "i");
 
@@ -44,6 +46,12 @@ export async function GET(request) {
       favOnly === "true"
         ? { favourite: true }
         : { favourite: { $in: [true, false] } };
+
+    const nsfwFilter =
+      nsfw === "false"
+        ? { nsfw: false }
+        : { nsfw: { $in: [true, false] } };
+
 
     const searchWordsFilter = {
       "$or": [
@@ -66,6 +74,7 @@ export async function GET(request) {
         ...showDownloadedFilter,
         ...showHiddenFilter,
         ...favOnlyFilter,
+        ...nsfwFilter,
       };
     }
     else
@@ -75,6 +84,7 @@ export async function GET(request) {
         ...showDownloadedFilter,
         ...showHiddenFilter,
         ...favOnlyFilter,
+        ...nsfwFilter,
       };
     }
     const sortOptions = {};

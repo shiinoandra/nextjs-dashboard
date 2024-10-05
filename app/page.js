@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, mutate, useCallback } from "react";
 import Layout from "./components/Layout";
+import { useDataContext } from "./components/Layout";
+
 import ModelCard from "./components/ModelCard.js";
 import ModelDetail from "./components/ModelDetail";
 import FilterPopout from "./components/FilterPopout.js";
@@ -34,6 +36,7 @@ export default function Home() {
     showHidden: false,
     nsfwContent: true,
     showDownloaded: true,
+    nsfw : false,
   })
 
   const [sortOpt, setSortOpt]=useState({text:"Published",key:"published_date"});
@@ -42,6 +45,8 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [timer, setTimer] = useState(null);
   const [searchWords, setSearchWords] = useState("");
+  const { dlQueueSize, setDlQueueSize } = useDataContext();
+
 
 
 
@@ -66,7 +71,7 @@ export default function Home() {
 
   const getModelUrl = useCallback(() => {
     if (!hasMore) return null;
-    return `/api/models?page=${page}&limit=${MODELS_PER_PAGE}&showHidden=${filters.showHidden}&showDownloaded=${filters.showDownloaded}&favOnly=${filters.showFavorites}&sortBy=${sortOpt.key}&order=${sortOrder}&search=${searchWords}`;
+    return `/api/models?page=${page}&limit=${MODELS_PER_PAGE}&showHidden=${filters.showHidden}&showDownloaded=${filters.showDownloaded}&favOnly=${filters.showFavorites}&sortBy=${sortOpt.key}&order=${sortOrder}&nsfw=${filters.nsfw}&search=${searchWords}`;
   }, [page,filters,sortOpt,sortOrder,searchWords
   ]);
 
@@ -147,13 +152,7 @@ export default function Home() {
 
 
 
-  // useEffect(() => {
-  //   if (data && data.models) {
-  //     setModels((prevModels) => [...prevModels, ...data.models]);
-  //     setHasMore(data.hasMore);
-  //     //setLoading(false); // Ensure loading is false after data is fetched
-  //   }
-  // }, [data]);
+
 
   useEffect(() => {
     if (modelData && modelData.models) {
@@ -166,6 +165,7 @@ export default function Home() {
   useEffect(() => {
     if (queueData && queueData.queue) {
       setDlQueue(queueData.queue);
+      setDlQueueSize(queueData.queue.filter((x) => x.flag === "que").length); // Update the context value
     }
   }, [queueData]);
 
@@ -256,18 +256,22 @@ export default function Home() {
       return (
         <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-6 sm:px-6">
           <div className="flex flex-1 justify-between min-[900px]:hidden">
-            <a
+            <button
+              disabled={page === 1}
               href="#"
+              onClick={() => handlePageChange(page - 1)}
               className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Previous
-            </a>
-            <a
+            </button>
+            <button
               href="#"
+              disabled={page === totalPages}
+              onClick={() => handlePageChange(page + 1)}
               className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Next
-            </a>
+            </button>
           </div>
           <div className=" hidden min-[900px]:flex min-[900px]:flex-1 min-[900px]:items-center min-[900px]:justify-between">
             <div>

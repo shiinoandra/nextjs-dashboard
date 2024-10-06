@@ -1,6 +1,8 @@
 "use client";
 
 import Layout from "../components/Layout";
+import OpenSideBarButton from "../components/OpenSidebarButton";
+
 import { useDataContext } from "../components/Layout";
 import {
   useState,
@@ -24,11 +26,18 @@ export default function Downloads() {
   const [DlQueue, setDlQueue] = useState([]);
   const flask_url = "http://192.168.18.17:5000";
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
   const dcontext = useDataContext();
-  
+  const [itemsPerPage, setitemsPerPage] = useState(5);
+
   const setScheduledSize = dcontext.setScheduledSize;
   const setDlQueueSize = dcontext.setDlQueueSize;
+  const sidebarOpen = dcontext.sidebarOpen;
+  const setSidebarOpen = dcontext.setSidebarOpen;
+
+  const handleModelPerPageChange = (num) => {
+    setitemsPerPage(num);
+    setCurrentPage(1);
+  };
 
 
   const copy_to_clipboard = (text) => {
@@ -47,9 +56,9 @@ export default function Downloads() {
     if (queueData && queueData.queue) {
       setDlQueue(queueData.queue);
       setScheduledSize(queueData.queue.filter((x) => x.flag === "sched").length); // Update the context value
-      setDlQueueSize(queueData.queue.filter((x) => x.flag === "que").length); // Update the context value    
+      setDlQueueSize(queueData.queue.filter((x) => x.flag === "que").length); // Update the context value
       }
-  }, [queueData]);
+  }, [queueData,itemsPerPage]);
 
 
   const handleDownload = async (id) => {
@@ -118,7 +127,7 @@ export default function Downloads() {
       );
     }
     return (
-      <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-2 sm:px-6 ">
+      <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-2 sm:px-4 ">
         {/* <div className="flex flex-1 justify-between min-[900px]:hidden">
             <a
               href="#"
@@ -211,13 +220,37 @@ export default function Downloads() {
   return (
     <Layout>
       <div className="font-sans max-w-full mx-auto ">
+      <div className="inline-flex items-center gap-x-4">
+        <OpenSideBarButton
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+        />
         <h1 className="text-2xl font-extrabold text-gray-800">
           In Queue ({queuedItems.length})
         </h1>
+        </div>
         <div className="grid min-[900px]:grid-cols-3 gap-4 mt-8">
           <div className="col-span-1 min-[900px]:col-span-2 space-y-4 order-2 min-[900px]:order-1 ">
-            <div className=" bg-green-300 items-center justify-center">
-              {PaginationControls()}
+            <div className="grid grid-col-1 sm:flex justify-center items-center sm:justify-start">
+              <div className="">{PaginationControls()}</div>
+              <label className="text-sm text-center py-2 px-4 md:text-left text-slate-800 ">
+                Items per Page:
+              </label>
+              <div className="flex w-full sm:w-fit sm:items-end sm:justify-end items-center justify-center">
+                <select
+                  className="inline-flex min-h-[3rem] w-fit bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border  rounded pl-3 pr-8 py-2 transition duration-300 ease focus:outline-none border-slate-400  shadow-sm focus:shadow-md appearance-none cursor-pointer"
+                  onChange={(e) => handleModelPerPageChange(e.target.value)}
+                  value={itemsPerPage}
+                >
+                  {[5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(
+                    (count) => (
+                      <option key={count} value={count}>
+                        {count}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
             </div>
             {/* start of card */}
             {currentItems.map((model) => (

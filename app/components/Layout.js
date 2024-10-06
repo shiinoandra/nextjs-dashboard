@@ -4,8 +4,8 @@ import Link from "next/link";
 import {
   ArrowDownTrayIcon,
   Cog8ToothIcon,
-  Bars3Icon,
   XMarkIcon,
+  Bars3Icon
 } from "@heroicons/react/24/solid";
 import { CalendarDaysIcon } from "@heroicons/react/24/outline";
 
@@ -14,16 +14,22 @@ export const DataContext = createContext();
 export function DataProvider({ children }) {
   const [dlQueueSize, setDlQueueSize] = useState(0);
   const [scheduledSize, setScheduledSize] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
 
   const value = {
     dlQueueSize,
     scheduledSize,
+    sidebarOpen,
     setDlQueueSize: (newSize) => {
       setDlQueueSize(newSize);
     },
 
     setScheduledSize: (newSize) => {
       setScheduledSize(newSize);
+    },
+    setSidebarOpen: (flag) => {
+      setSidebarOpen(flag);
     },
   };
 
@@ -37,6 +43,7 @@ export function DataProvider({ children }) {
 
 export function useDataContext() {
   const context = useContext(DataContext);
+  console.log("context succesfully initiated")
   if (context === undefined) {
     throw new Error("useDataContext must be used within a DataProvider");
   }
@@ -44,10 +51,11 @@ export function useDataContext() {
 }
 
 export default function Layout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const dcontext = useDataContext();
   const dlQueueSize = dcontext.dlQueueSize;
   const scheduledSize = dcontext.scheduledSize;
+  const sidebarOpen = dcontext.sidebarOpen;
+  const setSidebarOpen = dcontext.setSidebarOpen;
 
 
   const toggleSidebar = () => {
@@ -57,18 +65,6 @@ export default function Layout({ children }) {
   return (
     <DataProvider>
       <div className="flex h-screen bg-gray-100">
-        <button
-          onClick={() => toggleSidebar()}
-          className="fixed top-4 left-4 z-50 min-[1150px]:hidden p-2 rounded-md bg-gray-800 text-white"
-          aria-label="Toggle sidebar"
-        >
-          {sidebarOpen ? (
-            <XMarkIcon className="h-6 w-6" />
-          ) : (
-            <Bars3Icon className="h-6 w-6" />
-          )}
-        </button>
-
         {/* Sidebar */}
         <aside
           className={`fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 ease-in-out ${

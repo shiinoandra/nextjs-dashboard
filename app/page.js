@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo, mutate, useCallback } from "react";
 import Layout from "./components/Layout";
 import { useDataContext } from "./components/Layout";
+import OpenSideBarButton from "./components/OpenSidebarButton";
+
 
 import ModelCard from "./components/ModelCard.js";
 import ModelDetail from "./components/ModelDetail";
@@ -13,12 +15,14 @@ import {
   ChevronRightIcon,
   ChevronUpIcon,
   ChevronDownIcon,
+  XMarkIcon,
+Bars3Icon
 } from "@heroicons/react/24/outline";
 import useSWR from "swr";
 import { Popover } from "@headlessui/react";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 
-const MODELS_PER_PAGE = 21; // Adjust this number as needed
+// const MODELS_PER_PAGE = 20; // Adjust this number as needed
 
 export default function Home() {
   const [selectedModel, setSelectedModel] = useState(null)
@@ -38,6 +42,7 @@ export default function Home() {
     showDownloaded: true,
     nsfw : false,
   })
+  const [modelsPerPage,setModelsPerPage] = useState(20);
 
   const [sortOpt, setSortOpt]=useState({text:"Published",key:"published_date"});
   const [sortOrder, setSortOrder] = useState(-1);
@@ -45,7 +50,15 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [timer, setTimer] = useState(null);
   const [searchWords, setSearchWords] = useState("");
-  const { dlQueueSize, setDlQueueSize } = useDataContext();
+  const dcontext = useDataContext();
+
+  const setScheduledSize = dcontext.setScheduledSize;
+  const setDlQueueSize = dcontext.setDlQueueSize;
+  const setSidebarOpen = dcontext.setSidebarOpen;
+  const sidebarOpen = dcontext.sidebarOpen;
+
+
+
 
 
 
@@ -69,10 +82,14 @@ export default function Home() {
     }
   }
 
+  const handleModelPerPageChange = (num) => {
+    setModelsPerPage(num);
+  };
+
   const getModelUrl = useCallback(() => {
     if (!hasMore) return null;
-    return `/api/models?page=${page}&limit=${MODELS_PER_PAGE}&showHidden=${filters.showHidden}&showDownloaded=${filters.showDownloaded}&favOnly=${filters.showFavorites}&sortBy=${sortOpt.key}&order=${sortOrder}&nsfw=${filters.nsfw}&search=${searchWords}`;
-  }, [page,filters,sortOpt,sortOrder,searchWords
+    return `/api/models?page=${page}&limit=${modelsPerPage}&showHidden=${filters.showHidden}&showDownloaded=${filters.showDownloaded}&favOnly=${filters.showFavorites}&sortBy=${sortOpt.key}&order=${sortOrder}&nsfw=${filters.nsfw}&search=${searchWords}`;
+  }, [page,filters,sortOpt,sortOrder,searchWords,modelsPerPage
   ]);
 
   const fetcher = (...args) => fetch(...args).then((res) => res.json());
@@ -86,7 +103,7 @@ export default function Home() {
     data: queueData,
     error: queueError,
     isLoading: queueLoading,
-  } = useSWR("/api/download/", fetcher, { refreshInterval:2000 });
+  } = useSWR("/api/download?mode=full", fetcher, { refreshInterval: 2000 });
 
   const paginationInfo = useMemo(() => {
     const maxPageButtons = 7;
@@ -157,7 +174,7 @@ export default function Home() {
   useEffect(() => {
     if (modelData && modelData.models) {
       setModels(modelData.models);
-      setTotalPages(Math.ceil(modelData.totalCount / MODELS_PER_PAGE));
+      setTotalPages(Math.ceil(modelData.totalCount / modelsPerPage));
     }
   }, [modelData]);
 
@@ -165,6 +182,9 @@ export default function Home() {
   useEffect(() => {
     if (queueData && queueData.queue) {
       setDlQueue(queueData.queue);
+      setScheduledSize(
+        queueData.queue.filter((x) => x.flag === "sched").length
+      ); // Update the context value
       setDlQueueSize(queueData.queue.filter((x) => x.flag === "que").length); // Update the context value
     }
   }, [queueData]);
@@ -278,11 +298,11 @@ export default function Home() {
               <p className="py-4 text-sm text-gray-800">
                 Showing
                 <span className="font-medium m-2">
-                  {(page - 1) * MODELS_PER_PAGE + 1}
+                  {(page - 1) * modelsPerPage + 1}
                 </span>
                 to
                 <span className="font-medium m-2">
-                  {(page - 1) * MODELS_PER_PAGE + MODELS_PER_PAGE}
+                  {(page - 1) * modelsPerPage + modelsPerPage}
                 </span>
                 of
                 {modelData && (
@@ -369,9 +389,14 @@ export default function Home() {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-extrabold text-gray-800">
-        Browse Models
-      </h1>
+      {/* <OpenSideBarButton /> */}
+      <div className="inline-flex items-center gap-x-4">
+        <OpenSideBarButton
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+        />
+        <h1 className="text-2xl font-extrabold text-gray-800">Browse Models</h1>
+      </div>
       <div className="mt-8 mb-4 relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
         {/* search and show menu */}
         <input
@@ -387,7 +412,7 @@ export default function Home() {
       {/* sort and order */}
 
       <div className="grid grid-cols-1 pb-4 pt-4 sm:pt-4 sm:pb-8 gap-2 sm:grid-cols-10">
-        <div className="sm:grid sm:grid-cols-2 grid-cols-1 sm:col-span-7 sm:justify-start gap-x-2 sm:w-fit w-full">
+        <div className="sm:grid sm:grid-cols-2 grid-cols-1 sm:col-span-6 sm:justify-start items-center gap-x-2 sm:w-fit w-full">
           <Popover className="relative">
             <Popover.Button
               id="dropdownDefault"
@@ -456,11 +481,29 @@ export default function Home() {
             </Popover.Panel>
           </Popover>
         </div>
-        <div className="flex justify-center sm:col-span-3 sm:justify-end">
+        <div className=" grid grid-col-1 sm:flex justify-start sm:col-span-4 sm:justify-end items-center">
+          <div className="flex mx-4 items-center sm:order-1 order-2">
+            <label className="text-sm text-center p-2 md:text-left text-slate-800 ">
+              Items per Page:
+            </label>
+            <div className="w-fit">
+              <select
+                className="inline-flex min-h-[3rem] w-fit bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded pl-3 pr-8 py-2 transition duration-300 ease focus:outline-none border-slate-400  shadow-sm focus:shadow-md appearance-none cursor-pointer"
+                onChange={(e) => handleModelPerPageChange(e.target.value)}
+                value={modelsPerPage}
+              >
+                {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((count) => (
+                  <option key={count} value={count}>
+                    {count}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <button
             id="dropdownDefault"
             data-dropdown-toggle="dropdown"
-            className="inline-flex min-h-[3rem] w-full sm:w-max items-center bg-stone-100 text-gray-900 font-semibold sm:font-light justify-start sm:justify-between rounded-md sm:bg-indigo-500 px-4 py-2 sm:text-white gap-2"
+            className="order-1 sm:order-2 inline-flex min-h-[3rem] w-full sm:w-max items-center bg-stone-100 text-gray-900 font-semibold sm:font-light justify-start sm:justify-between rounded-md sm:bg-indigo-500 px-4 py-2 sm:text-white gap-2"
             onClick={() => setShowFilterPopout(!showFilterPopout)}
             type="button"
           >

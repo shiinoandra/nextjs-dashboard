@@ -49,17 +49,6 @@ const ModelDetail = ({ model,onClose }) => {
 		},
 	};
 
-	const test_tags = [
-		"character",
-		"background",
-		"comcept",
-		"style",
-		"anime",
-		"girl",
-		"sexy",
-		"cartoon",
-		"manga",
-	];
 
 	const copy_to_clipboard = (text) =>{
 		navigator.clipboard.writeText(text)

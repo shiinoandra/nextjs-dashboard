@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo, mutate, useCallback } from "react";
+import { useState, useEffect, useMemo, mutate, useCallback,React } from "react";
 import Layout from "./components/Layout";
 import { useDataContext } from "./components/Layout";
 import OpenSideBarButton from "./components/OpenSidebarButton";
 
-
+import { Toaster, ToastIcon, toast, resolveValue } from "react-hot-toast";
 import ModelCard from "./components/ModelCard.js";
 import ModelDetail from "./components/ModelDetail";
+import ConfirmDelete from "./components/ConfirmDelete";
+
 import FilterPopout from "./components/FilterPopout.js";
 import {
   FunnelIcon,
@@ -19,8 +21,9 @@ import {
 Bars3Icon
 } from "@heroicons/react/24/outline";
 import useSWR from "swr";
-import { Popover } from "@headlessui/react";
+import { Popover,Transition } from "@headlessui/react";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
+
 
 // const MODELS_PER_PAGE = 20; // Adjust this number as needed
 
@@ -34,6 +37,7 @@ export default function Home() {
   const [totalPages,setTotalPages] = useState(1);
   const [showFilterPopout, setShowFilterPopout] = useState(false);
   const [showModelDetail, setShowModelDetail] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [filters, setFilters] = useState({
     showFavorites: false,
@@ -62,6 +66,38 @@ export default function Home() {
 
 
 
+const TailwindToaster = () => {
+  return (
+    <Toaster position="top-right">
+      {(t) => (
+        <Transition
+          appear
+          show={t.visible}
+          as="div" // Add this line to use a div instead of Fragment
+          className="transform p-4 flex bg-white rounded shadow-lg"
+          enter="transition-all duration-150"
+          enterFrom="opacity-0 scale-50"
+          enterTo="opacity-100 scale-100"
+          leave="transition-all duration-150"
+          leaveFrom="opacity-100 scale-100"
+          leaveTo="opacity-0 scale-75"
+        >
+          <ToastIcon toast={t} />
+          <p className="px-2">{resolveValue(t.message)}</p>
+        </Transition>
+      )}
+    </Toaster>
+  );
+};
+
+
+const showToast= (type,message) => {
+  if(type=="success")
+      toast.success(message);
+  if(type=="error")
+      toast.error(message);
+
+};
 
   const searchChanged = (e) => {
     setInputValue(e.target.value);
@@ -212,6 +248,12 @@ export default function Home() {
     setShowModelDetail(true);
 
   }
+
+  const handleConfirmDelete = (model) => {
+    setSelectedModel(model);
+    setShowConfirmDelete(true);
+  };
+
   const handlePageChange = (newPage) => {
     console.log(newPage);
     setPage(parseInt(newPage));
@@ -397,6 +439,8 @@ export default function Home() {
         />
         <h1 className="text-2xl font-extrabold text-gray-800">Browse Models</h1>
       </div>
+      <TailwindToaster />
+
       <div className="mt-8 mb-4 relative flex items-center w-full h-12 rounded-lg focus-within:shadow-lg bg-white overflow-hidden">
         {/* search and show menu */}
         <input
@@ -526,6 +570,13 @@ export default function Home() {
           onClose={() => setShowModelDetail(false)}
         />
       )}
+      {showConfirmDelete && (
+        <ConfirmDelete
+          model={selectedModel}
+          onClose={() => setShowConfirmDelete(false)}
+          showToast={showToast}
+        />
+      )}
       {modelError ? (
         <p className="text-center text-red-500">{error}</p>
       ) : modelLoading ? (
@@ -546,7 +597,9 @@ export default function Home() {
                   handleModelVisibilityChange(model._id, isHidden)
                 }
                 onShowDetail={(model) => handleSelectedModel(model)}
+                showDeleteConfirmation={(model) => handleConfirmDelete(model)}
                 dlQueue={DlQueue}
+                showToast={showToast}
               />
             </div>
           ))}

@@ -3,6 +3,8 @@
 import Layout from "../components/Layout";
 import { useDataContext } from "../components/Layout";
 import OpenSideBarButton from "../components/OpenSidebarButton";
+import ModelDetail from "../components/ModelDetail";
+
 
 import {
   useState,
@@ -36,6 +38,8 @@ export default function Downloads() {
   const setDlQueueSize = dcontext.setDlQueueSize;
   const sidebarOpen = dcontext.sidebarOpen;
   const setSidebarOpen = dcontext.setSidebarOpen;
+  const [showModelDetail, setShowModelDetail] = useState(false);
+  const [selectedModel, setSelectedModel] = useState(null);
 
   const handleModelPerPageChange = (num) => {
     setitemsPerPage(num);
@@ -46,6 +50,12 @@ export default function Downloads() {
   const copy_to_clipboard = (text) => {
     navigator.clipboard.writeText(text);
   };
+
+  const handleSelectedModel = (model) => {
+    setSelectedModel(model);
+    setShowModelDetail(true);
+  };
+
 
   const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
@@ -196,14 +206,20 @@ export default function Downloads() {
   return (
     <Layout>
       <div className="font-sans max-w-full mx-auto ">
+        {showModelDetail && (
+          <ModelDetail
+            model={selectedModel}
+            onClose={() => setShowModelDetail(false)}
+          />
+        )}
         <div className="inline-flex items-center gap-x-4">
-        <OpenSideBarButton
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-        />
-        <h1 className="text-2xl font-extrabold text-gray-800">
-          Scheduled Items ({queuedItems.length})
-        </h1>
+          <OpenSideBarButton
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+          />
+          <h1 className="text-2xl font-extrabold text-gray-800">
+            Scheduled Items ({queuedItems.length})
+          </h1>
         </div>
         <div className="grid  grid-cols-1 min-[900px]:max-[1500px]:grid-cols-2 min-[1501px]:grid-cols-3 gap-4 mt-8">
           <div className="col-span-1 min-[900px]:col-span-2 space-y-4 order-2 min-[900px]:order-1 ">
@@ -235,6 +251,7 @@ export default function Downloads() {
                 <div className="flex gap-4 w-full min-w-96">
                   <div className="w-28 h-28 shrink-0">
                     <img
+                      onClick={() => handleSelectedModel(model)}
                       src={model.image_url}
                       className="m-auto w-full h-full object-cover"
                     />
@@ -242,9 +259,13 @@ export default function Downloads() {
 
                   <div className="flex flex-col gap-4">
                     <div>
-                      <h3 className="text-base font-bold text-gray-800">
+                      <a
+                        href={`https://civitai.com/models/${model.model_id}`}
+                        target="_blank"
+                        className="text-base font-bold text-gray-800"
+                      >
                         {model.model_name}
-                      </h3>
+                      </a>
                       <p className="text-sm font-semibold text-gray-500 mt-2 flex items-center gap-2">
                         Version : {model.model_version}
                       </p>

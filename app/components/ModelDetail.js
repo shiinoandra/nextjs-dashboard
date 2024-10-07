@@ -205,9 +205,12 @@ const ModelDetail = ({ model,onClose }) => {
                                 Author
                               </p>
                               <div className="flex items-center">
-                                <p className="p-1 mr-4 text-sm rounded">
+                                <a
+                                  className="p-1 mr-4 text-sm rounded"
+                                  href={`https://civitai.com/user/${model.author}`}
+                                >
                                   {model.author}
-                                </p>
+                                </a>
                               </div>
                             </div>
                             <div className="flex justify-between text-gray-600 border-b-2 border-gray-300">
@@ -331,9 +334,9 @@ const ModelDetail = ({ model,onClose }) => {
                     <div className="mb-6">
                       <h3 className="text-lg font-semibold mb-2">Tags:</h3>
                       <div className="flex flex-wrap gap-x-1 gap-y-2">
-                        {test_tags &&
-                          test_tags.length > 0 &&
-                          test_tags.map((tag, index) => {
+                        {model.tags &&
+                          model.tags.length > 0 &&
+                          model.tags.map((tag, index) => {
                             const badgeColor = badgeRule[tag] || badgeRule.def;
                             return (
                               <span

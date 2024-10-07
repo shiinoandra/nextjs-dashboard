@@ -20,6 +20,7 @@
     "react": "19.0.0-rc-f38c22b244-20240704",
     "react-countdown": "^2.3.6",
     "react-dom": "19.0.0-rc-f38c22b244-20240704",
+    "react-hot-toast": "^2.4.1",
     "swr": "^2.2.5",
     "typescript": "5.5.2",
     "use-debounce": "^10.0.1",

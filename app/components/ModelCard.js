@@ -24,6 +24,7 @@ export default function ModelCard({
   dlQueue,
   showToast,
   showDeleteConfirmation,
+  onDeleteComplete,
 }) {
   const [isUpdatingFav, setIsUpdatingFav] = useState(false);
   const [isUpdatingHidden, setIsUpdatingHidden] = useState(false);
@@ -60,9 +61,11 @@ export default function ModelCard({
 
   useEffect(() => {
     const wasInQueue = prevQueueRef.current.some(
-      (item) => item._id === model._id && item.flag!="sched"
+      (item) => item._id === model._id && item.flag != "sched"
     );
-    const isInQueue = dlQueue.some((item) => item._id === model._id && item.flag!="sched");
+    const isInQueue = dlQueue.some(
+      (item) => item._id === model._id && item.flag != "sched"
+    );
     if (isInQueue) {
       setIsDownloading("dl");
     } else {
@@ -109,8 +112,15 @@ export default function ModelCard({
   };
 
   const onShowDeleteConfirmation = () => {
-      showDeleteConfirmation(model);
-    };
+    // Remove the setDownloadWrapper from here
+    showDeleteConfirmation(model, () => {
+      // This callback will be called when delete is successful
+      if (onDeleteComplete) {
+        setIsDownloaded(false);
+        onDeleteComplete(model._id);
+      }
+    });
+  };
 
   const handleDownload = async () => {
     try {
@@ -119,14 +129,13 @@ export default function ModelCard({
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       console.log(data);
-      showToast("success",model._id+" is added to download queue")
+      showToast("success", model._id + " is added to download queue");
     } catch (error) {
       console.error("Error:", error);
-      showToast("error","error downloading: "+error);
+      showToast("error", "error downloading: " + error);
       setIsDownloading("");
     }
   };
-
 
   const handleUpdate = async (action) => {
     if (action == "fav") {
@@ -186,11 +195,10 @@ export default function ModelCard({
         setIsUpdatingHidden(false);
         setIsUpdatingSchedule(false);
         showToast("error", "Failed updating model");
-
       }
     } catch (error) {
       console.error("Error updating model:", error);
-      showToast("error", "error updating model: "+error);
+      showToast("error", "error updating model: " + error);
 
       setIsUpdatingFav(false);
       setIsUpdatingHidden(false);
@@ -239,17 +247,17 @@ export default function ModelCard({
         }
       }
     } else {
-        return (
-          <button
-            className="flex items-center space-x-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors duration-300"
-            // onClick={() => handleDeleteModel()}
-            onClick={() => onShowDeleteConfirmation()}
-          >
-            <TrashIcon className="h-4 w-4" />
-            <span>Delete</span>
-          </button>
-        );
-  }
+      return (
+        <button
+          className="flex items-center space-x-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-3 rounded-md transition-colors duration-300"
+          // onClick={() => handleDeleteModel()}
+          onClick={() => onShowDeleteConfirmation()}
+        >
+          <TrashIcon className="h-4 w-4" />
+          <span>Delete</span>
+        </button>
+      );
+    }
   }
 
   const cd_renderer = ({ days, hours, minutes }) => {

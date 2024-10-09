@@ -12,7 +12,7 @@ import {
 } from "@headlessui/react";
 import { TrashIcon } from "@heroicons/react/24/solid";
 
-const ConfirmDelete = ({ model,showToast, onClose }) => {
+const ConfirmDelete = ({ model, showToast, onClose, onConfirm }) => {
   const [open, setOpen] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -25,7 +25,7 @@ const ConfirmDelete = ({ model,showToast, onClose }) => {
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setIsDeleting(false);
-      setIsDownloaded(false);
+      onConfirm();
       showToast("success", model._id + " is deleted");
       onClose();
     } catch (error) {

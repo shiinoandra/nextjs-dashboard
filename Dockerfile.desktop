@@ -1,0 +1,6 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Link to Dockerfile
+Type=Link
+URL=https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile
+Icon=text-html

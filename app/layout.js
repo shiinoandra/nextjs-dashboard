@@ -2,8 +2,8 @@ import '../globals.css'
 import { DataProvider } from "../app/components/Layout";
 
 export const metadata = {
-  title: 'File Manager',
-  description: 'A Next.js file manager application',
+  title: 'Lora Manager',
+  description: 'Lora manager for model collections',
 }
 
 export default function RootLayout({ children }) {

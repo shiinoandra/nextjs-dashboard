@@ -23,6 +23,7 @@ Bars3Icon
 import useSWR from "swr";
 import { Popover,Transition } from "@headlessui/react";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
+import { markCurrentScopeAsDynamic } from "next/dist/server/app-render/dynamic-rendering";
 
 
 // const MODELS_PER_PAGE = 20; // Adjust this number as needed
@@ -37,7 +38,13 @@ export default function Home() {
   const [totalPages,setTotalPages] = useState(1);
   const [showFilterPopout, setShowFilterPopout] = useState(false);
   const [showModelDetail, setShowModelDetail] = useState(false);
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  // const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [deleteDialogState,setDeleteDialogState] = useState({
+      isOpen: false,
+      model: null,
+      onSuccess: ({}), // Store the callback
+    });
+
   const [hasMore, setHasMore] = useState(true);
   const [filters, setFilters] = useState({
     showFavorites: false,
@@ -55,6 +62,7 @@ export default function Home() {
   const [timer, setTimer] = useState(null);
   const [searchWords, setSearchWords] = useState("");
   const dcontext = useDataContext();
+  const [curentSetDownloaded,setcurrentSetDownloaded] =useState(({}));
 
   const setScheduledSize = dcontext.setScheduledSize;
   const setDlQueueSize = dcontext.setDlQueueSize;
@@ -225,6 +233,33 @@ const showToast= (type,message) => {
     }
   }, [queueData]);
 
+    const handleShowDeleteConfirmation = (model, onSuccess) => {
+      // Show your confirmation dialog here
+      setDeleteDialogState({
+        isOpen: true,
+        model: model,
+        onSuccess: onSuccess, // Store the callback
+      });
+    };
+
+    const handleDeleteConfirm=() => {
+      try {
+
+        // If successful, call the stored callback
+        if (deleteDialogState.onSuccess) {
+          deleteDialogState.onSuccess();
+        }
+        // Clear the dialog state
+        setDeleteDialogState({
+          isOpen: false,
+          model: null,
+          onSuccess: null,
+        });
+      } catch (error) {
+        console.error("Delete failed:", error);
+      }
+    };
+
 
   if (modelError) {
     console.error("Model Error:", modelError);
@@ -249,10 +284,6 @@ const showToast= (type,message) => {
 
   }
 
-  const handleConfirmDelete = (model) => {
-    setSelectedModel(model);
-    setShowConfirmDelete(true);
-  };
 
   const handlePageChange = (newPage) => {
     console.log(newPage);
@@ -570,11 +601,19 @@ const showToast= (type,message) => {
           onClose={() => setShowModelDetail(false)}
         />
       )}
-      {showConfirmDelete && (
+      {deleteDialogState.isOpen && (
         <ConfirmDelete
-          model={selectedModel}
-          onClose={() => setShowConfirmDelete(false)}
+          model={deleteDialogState.model}
+          onConfirm={handleDeleteConfirm}
+          onClose={() =>
+            setDeleteDialogState({
+              isOpen: false,
+              model: null,
+              onSuccess: null,
+            })
+          }
           showToast={showToast}
+          setIsDownloaded={curentSetDownloaded}
         />
       )}
       {modelError ? (
@@ -597,7 +636,10 @@ const showToast= (type,message) => {
                   handleModelVisibilityChange(model._id, isHidden)
                 }
                 onShowDetail={(model) => handleSelectedModel(model)}
-                showDeleteConfirmation={(model) => handleConfirmDelete(model)}
+                showDeleteConfirmation={handleShowDeleteConfirmation}
+                onDeleteComplete={(modelId) => {
+                  console.log(`Model ${modelId} was deleted`);
+                }}
                 dlQueue={DlQueue}
                 showToast={showToast}
               />

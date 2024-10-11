@@ -4,24 +4,47 @@ import Layout from "../components/Layout";
 import { useDataContext } from "../components/Layout";
 import OpenSideBarButton from "../components/OpenSidebarButton";
 import ModelDetail from "../components/ModelDetail";
+import IssueCard from "../components/IssueCard";
+import { Toaster, ToastIcon, toast, resolveValue } from "react-hot-toast";
+
 
 import {
   useState,
   useEffect,
   useMemo,
-  mutate,
-  useCallback,
-  useContext,
+
 } from "react";
 import useSWR from "swr";
-import {
-  TrashIcon,
-  ClockIcon,
-} from "@heroicons/react/24/outline";
-import Countdown from "react-countdown";
-
+import { Popover, Transition } from "@headlessui/react";
 export default function MaintenanceIssue() {
 
+  const TailwindToaster = () => {
+  return (
+    <Toaster position="top-right">
+      {(t) => (
+        <Transition
+          appear
+          show={t.visible}
+          as="div" // Add this line to use a div instead of Fragment
+          className="transform p-4 flex bg-white rounded shadow-lg"
+          enter="transition-all duration-150"
+          enterFrom="opacity-0 scale-50"
+          enterTo="opacity-100 scale-100"
+          leave="transition-all duration-150"
+          leaveFrom="opacity-100 scale-100"
+          leaveTo="opacity-0 scale-75"
+        >
+          <ToastIcon toast={t} />
+          <p className="px-2">{resolveValue(t.message)}</p>
+        </Transition>
+      )}
+    </Toaster>
+  );
+};
+const showToast = (type, message) => {
+  if (type == "success") toast.success(message);
+  if (type == "error") toast.error(message);
+};
 
   function createInitialState(key, text) {
     const initial_state = {
@@ -30,6 +53,7 @@ export default function MaintenanceIssue() {
       currentPage: 0,
       key: key,
       text: text,
+      mutate: () => {},
     };
 
     return initial_state;
@@ -67,17 +91,22 @@ export default function MaintenanceIssue() {
   const [selectedModel, setSelectedModel] = useState(null);
   const [allDataLoaded, setAllDataLoaded] = useState(false);
 
+  // const IssuesData = [
+  //   missingHash,
+  //   mismatchHash,
+  //   missingCreator,
+  //   missingPreview,
+  //   missingModel,
+  //   missingJson,
+  //   missingHtml,
+  //   missingId,
+  //   missingIntegrity,
+  // ];
+
   const IssuesData = [
-    missingHash,
-    mismatchHash,
+
     missingCreator,
-    missingPreview,
-    missingModel,
-    missingJson,
-    missingHtml,
-    missingId,
-    missingIntegrity
-  ];
+  ]  
 
   const flask_url = "http://192.168.18.17:5000";
   const [itemsPerPage, setitemsPerPage] = useState(10);
@@ -98,15 +127,15 @@ export default function MaintenanceIssue() {
     revalidateOnReconnect: false,
   });
 
-    const {
-      data: missingId_data,
-      error: missingId_error,
-      mutate: missingId_mutate,
-    } = useSWR("/api/maintenance/issues?type=missing_id", fetcher, {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-    });
+  const {
+    data: missingId_data,
+    error: missingId_error,
+    mutate: missingId_mutate,
+  } = useSWR("/api/maintenance/issues?type=missing_id", fetcher, {
+    revalidateIfStale: false,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
 
   const {
     data: mismatchHash_data,
@@ -185,20 +214,22 @@ export default function MaintenanceIssue() {
         data: missingHash_data.data,
         count: missingHash_data.count,
         currentPage: 1,
+        mutate: missingHash_mutate,
       }));
     }
   }, [missingHash_data, itemsPerPage]);
 
-    useEffect(() => {
-      if (missingId_data && missingId_data.data) {
-        setMissingId((prevState) => ({
-          ...prevState,
-          data: missingId_data.data,
-          count: missingId_data.count,
-          currentPage: 1,
-        }));
-      }
-    }, [missingId_data, itemsPerPage]);
+  useEffect(() => {
+    if (missingId_data && missingId_data.data) {
+      setMissingId((prevState) => ({
+        ...prevState,
+        data: missingId_data.data,
+        count: missingId_data.count,
+        currentPage: 1,
+        mutate: missingId_mutate,
+      }));
+    }
+  }, [missingId_data, itemsPerPage]);
 
   useEffect(() => {
     if (mismatchHash_data && mismatchHash_data.data) {
@@ -207,6 +238,7 @@ export default function MaintenanceIssue() {
         data: mismatchHash_data.data,
         count: mismatchHash_data.count,
         currentPage: 1,
+        mutate: mismatchHash_mutate,
       }));
     }
   }, [mismatchHash_data, itemsPerPage]);
@@ -219,6 +251,7 @@ export default function MaintenanceIssue() {
         data: missingCreator_data.data,
         count: missingCreator_data.count,
         currentPage: 1,
+        mutate: missingCreator_mutate,
       }));
     }
   }, [missingCreator_data, itemsPerPage]);
@@ -230,6 +263,7 @@ export default function MaintenanceIssue() {
         data: missingPreview_data.data,
         count: missingPreview_data.count,
         currentPage: 1,
+        mutate: missingPreview_mutate,
       }));
     }
   }, [missingPreview_data, itemsPerPage]);
@@ -241,6 +275,7 @@ export default function MaintenanceIssue() {
         data: missingModel_data.data,
         count: missingModel_data.count,
         currentPage: 1,
+        mutate: missingModel_mutate,
       }));
     }
   }, [missingModel_data, itemsPerPage]);
@@ -252,6 +287,7 @@ export default function MaintenanceIssue() {
         data: missingJson_data.data,
         count: missingJson_data.count,
         currentPage: 1,
+        mutate: missingJson_mutate,
       }));
     }
   }, [missingJson_data, itemsPerPage]);
@@ -263,9 +299,15 @@ export default function MaintenanceIssue() {
         data: missingHtml_data.data,
         count: missingHtml_data.count,
         currentPage: 1,
+        mutate: missingHtml_mutate,
       }));
     }
   }, [missingHtml_data, itemsPerPage]);
+
+    useEffect(() => {
+      console.log(currentType);
+    }, [currentType]);
+
 
   useEffect(() => {
     if (missingIntegrity_data && missingIntegrity_data.data) {
@@ -274,17 +316,23 @@ export default function MaintenanceIssue() {
         data: missingIntegrity_data.data,
         count: missingIntegrity_data.count,
         currentPage: 1,
+        mutate: missingIntegrity_mutate,
       }));
     }
   }, [missingIntegrity_data, itemsPerPage]);
 
   useEffect(() => {
     if (IssuesData.every((data) => data.currentPage == 1)) {
-      setCurrentType(missingHash);
       setAllDataLoaded(true);
     }
   }, [IssuesData]);
 
+  useEffect(() => {
+    if (allDataLoaded) {
+      console.log("all data loaded");
+      setCurrentType(missingCreator);
+    }
+  }, [allDataLoaded]);
 
   const handleModelPerPageChange = (num) => {
     setitemsPerPage(num);
@@ -341,6 +389,21 @@ export default function MaintenanceIssue() {
     indexOfFirstItem,
     indexOfLastItem
   );
+
+  const handleFetchComplete = (flag) => {
+    if(flag==true)
+    {
+      currentType.mutate();
+      setCurrentType(currentType);
+      showToast(
+        "success",
+        "fetching data success"
+      );
+    }
+    else{
+        showToast("error", "fetching data failed");
+    }
+  };
 
   const paginationInfo = useMemo(() => {
     const maxPageButtons = 7;
@@ -459,6 +522,7 @@ export default function MaintenanceIssue() {
             Issues ({currentType.count})
           </h1>
         </div>
+        <TailwindToaster />
 
         <div className="grid  grid-cols-1 min-[900px]:max-[1500px]:grid-cols-2 min-[1501px]:grid-cols-3 gap-4 mt-8">
           <div className="col-span-1 min-[900px]:col-span-2 space-y-4 order-2 min-[900px]:order-1 ">
@@ -499,79 +563,14 @@ export default function MaintenanceIssue() {
             </div>
             {/* start of card */}
             {allDataLoaded ? (
-              currentItems.map((model) => (
-                <div
-                  className=" flex gap-4 bg-white px-4 py-6 rounded-md shadow-[0_2px_12px_-3px_rgba(6,81,237,0.3)]"
-                  key={model._id}
-                >
-                  <div className="flex gap-4 w-full min-w-96">
-                    <div className="w-28 h-28 shrink-0">
-                      <img
-                        onClick={() => handleSelectedModel(model)}
-                        src={
-                          model.preview_path != ""
-                            ? `http://192.168.18.17:9999/api/public/dl/BQVi9UJg/${encodeURI(
-                                model.preview_path
-                              )}`
-                            : "http://192.168.18.17:9999/api/public/dl/ar-zeiuw/noimg.png"
-                        }
-                        className="m-auto w-full h-full object-cover"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-4">
-                      <div>
-                        <a
-                          href={`https://civitai.com/models/${model.model_id}`}
-                          target="_blank"
-                          className="text-base font-bold text-gray-800"
-                        >
-                          {model.model_name}
-                        </a>
-                        <p className="text-sm font-semibold text-gray-500 mt-2 flex items-center gap-2">
-                          Version : {model.model_version}
-                        </p>
-                      </div>
-
-                      <div
-                        className="inline-flex rounded-md shadow-sm mb-2 hover:bg-gray-800 hover:text-white w-fit "
-                        role="group"
-                      >
-                        <button
-                          onClick={() => copy_to_clipboard(model._id)}
-                          type="button"
-                          className="inline-flex items-center px-2 py-2 text-xs font-medium  bg-transparent border border-gray-900 rounded-s-lg focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white"
-                        >
-                          {model.model_id}
-                        </button>
-                        <button
-                          onClick={() => copy_to_clipboard(model._id)}
-                          type="button"
-                          className="inline-flex items-center px-2 py-2 text-xs font-medium  bg-transparent border border-gray-900 rounded-e-lg focus:z-10 focus:ring-2 focus:ring-gray-500 focus:bg-gray-900 focus:text-white"
-                        >
-                          {model.version_id}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="ml-auto flex flex-col w-fit items-center justify-center ">
-                    <div className="flex-col gap-6 ">
-                      <span className=" grid grid-col-1 place-items-center md:inline-flex w-full min-h-[3rem] items-center gap-2  bg-orange-500 text-white text-sm font-bold px-2 py-2 rounded my-2 min-[900px]:justify-start justify-center">
-                        <ClockIcon className="w-4 h-4 md:w-8 md:h-8 "></ClockIcon>
-                      </span>
-                      <button
-                        onClick={() => handleCancelSchedule(model._id)}
-                        className="inline-flex min-h-[3rem] w-full bg-stone-100 hover:bg-red-300 text-gray-900 font-semibold justify-center items-center  min-[900px]:justify-start rounded-md px-2 py-2 gap-2"
-                      >
-                        <TrashIcon className="w-8 h-8"></TrashIcon>
-                        <span className="hidden md:inline-flex leading-none">
-                          Cancel
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              currentItems.map((item) => (
+                <IssueCard
+                  key={item._id}
+                  model={item}
+                  handleSelectedModel={handleSelectedModel}
+                  copy_to_clipboard={copy_to_clipboard}
+                  onFetchComplete={(flag) => handleFetchComplete(flag)}
+                ></IssueCard>
               ))
             ) : (
               <div className="text-center">

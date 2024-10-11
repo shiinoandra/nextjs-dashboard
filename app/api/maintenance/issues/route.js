@@ -136,3 +136,32 @@ export async function GET(request) {
   }
 
 }
+
+export async function PUT(request) {
+  try {
+    const client = await clientPromise;
+    const db = client.db("sd_model_new");
+
+    const { id, updatedData } = await request.json();
+
+    const result = await db
+      .collection("lora")
+      .updateOne({ _id: id }, { $set: updatedData });
+    console.log("PUTTING..");
+    console.log(result);
+    if (result.modifiedCount === 1) {
+      return NextResponse.json({ message: "Model updated successfully" });
+    } else {
+      return NextResponse.json(
+        { message: "Model not found or not updated" },
+        { status: 404 }
+      );
+    }
+  } catch (e) {
+    console.error("API: Error updating model:", e);
+    return NextResponse.json(
+      { error: "Unable to update model" },
+      { status: 500 }
+    );
+  }
+}

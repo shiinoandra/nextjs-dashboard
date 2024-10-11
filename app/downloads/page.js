@@ -37,6 +37,7 @@ export default function Downloads() {
   const setSidebarOpen = dcontext.setSidebarOpen;
   const [showModelDetail, setShowModelDetail] = useState(false);
   const [selectedModel, setSelectedModel] = useState(null);
+  const [downloadProgress,setDownloadProgress] =useState(null);
 
 
   const handleModelPerPageChange = (num) => {
@@ -69,6 +70,21 @@ export default function Downloads() {
       setDlQueueSize(queueData.queue.filter((x) => x.flag === "que").length); // Update the context value
       }
   }, [queueData,itemsPerPage]);
+
+    useEffect(() => {
+      const ws = new WebSocket("ws://192.168.18.17:8888/ws");
+
+      ws.onmessage = (event) => {
+        const newProgress = event.data;
+        setDownloadProgress(JSON.parse(newProgress));
+      };
+
+      ws.onclose = () => {
+        console.log("WebSocket connection closed");
+      };
+
+      return () => ws.close(); // Cleanup on component unmount
+    }, []);
 
 
   const handleDownload = async (id) => {
@@ -363,11 +379,31 @@ export default function Downloads() {
                             {model.model_name || ""}
                           </h3>
                         </div>
-                        <div className="flex flex-wrap justify-center items-center sm:inline-flex sm:justify-start gap-2 md:max-[1100px]:justify-center md:max-[1085px]:items-center">
-                          <ArrowPathIcon className="w-6 h-6 animate-spin" />
-                          <p className="text-m font-light text-grey mt-1 animate-pulse text-center">
-                            Currently Downloading ...
-                          </p>
+                        <div className="flex justify-between items-center gap-2 p-2 mb-4">
+                          <div className="flex items-center sm:justify-start gap-2">
+                            <ArrowPathIcon className="w-6 h-6 animate-spin" />
+                            <p className="text-m font-light text-grey mt-1 animate-pulse text-center">
+                              Currently Downloading ...
+                            </p>
+                          </div>
+                          <div className="text-m font-light text-grey mt-1">
+                            <p className="text-right">
+                              {`${Number(
+                                downloadProgress.dled_size / 1000000
+                              ).toFixed(2)} MB / ${Number(
+                                downloadProgress.total_size / 1000000
+                              ).toFixed(2)} MB`}{" "}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="w-full bg-gray-200 rounded-full">
+                          <div
+                            className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
+                            style={{ width: `${downloadProgress.percent}%` }}
+                          >
+                            {downloadProgress.percent}%
+                          </div>
                         </div>
                       </div>
                     </div>

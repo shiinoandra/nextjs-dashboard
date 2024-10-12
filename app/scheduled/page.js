@@ -40,6 +40,7 @@ export default function Downloads() {
   const setSidebarOpen = dcontext.setSidebarOpen;
   const [showModelDetail, setShowModelDetail] = useState(false);
   const [selectedModel, setSelectedModel] = useState(null);
+  const [currentScheduled,setCurrentScheduled] =useState([]);
 
   const handleModelPerPageChange = (num) => {
     setitemsPerPage(num);
@@ -68,9 +69,17 @@ export default function Downloads() {
   useEffect(() => {
     if (queueData && queueData.queue) {
       setDlQueue(queueData.queue);
-      setScheduledSize(
-        queueData.queue.filter((x) => x.flag === "sched").length
-      ); // Update the context value
+      const current_schedule = queueData.queue.filter((x) => x.flag === "sched");
+      const current_schedule_sorted = current_schedule.sort(function (a, b) {
+          return new Date(a.early_access_end) - new Date(b.early_access_end);
+      });
+      current_schedule_sorted.forEach((item) => {
+        console.log(item.model_name);
+        console.log(item.early_access_end);
+
+      });
+      setCurrentScheduled(current_schedule_sorted);
+      setScheduledSize(current_schedule_sorted.length); // Update the context value
       setDlQueueSize(queueData.queue.filter((x) => x.flag === "que").length); // Update the context value
     }
   }, [queueData]);
@@ -92,7 +101,7 @@ export default function Downloads() {
       <div>
         <span className="hidden min-[900px]:inline-flex">
           <span>
-            {hours}d : {hours}h :
+            {days}d : {hours}h :
           </span>{" "}
           <span>{minutes}m</span>
         </span>
@@ -103,11 +112,11 @@ export default function Downloads() {
     );
   };
   // Pagination logic
-  const queuedItems = DlQueue.filter((x) => x.flag === "sched");
+  const queuedItems = currentScheduled;
   const totalPages = Math.ceil(queuedItems.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = queuedItems.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = queuedItems.slice(indexOfFirstItem, indexOfLastItem)
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -298,7 +307,7 @@ export default function Downloads() {
                     <span className=" grid grid-col-1 place-items-center md:inline-flex w-full min-h-[3rem] items-center gap-2  bg-orange-500 text-white text-sm font-bold px-2 py-2 rounded my-2 min-[900px]:justify-start justify-center">
                       <ClockIcon className="w-4 h-4 md:w-8 md:h-8 "></ClockIcon>
                       <Countdown
-                        date={Date.parse(model.early_access_end)}
+                        date={new Date(model.early_access_end)}
                         renderer={cd_renderer}
                       ></Countdown>
                     </span>

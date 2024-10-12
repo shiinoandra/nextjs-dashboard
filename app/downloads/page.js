@@ -4,6 +4,8 @@ import Layout from "../components/Layout";
 import OpenSideBarButton from "../components/OpenSidebarButton";
 import ModelDetail from "../components/ModelDetail";
 
+import { Toaster, ToastIcon, toast, resolveValue } from "react-hot-toast";
+import { Popover, Transition } from "@headlessui/react";
 
 import { useDataContext } from "../components/Layout";
 import {
@@ -38,8 +40,38 @@ export default function Downloads() {
   const [showModelDetail, setShowModelDetail] = useState(false);
   const [selectedModel, setSelectedModel] = useState(null);
   const [downloadProgress,setDownloadProgress] =useState(null);
+  const [isCancelling,setIsCancelling]=useState(false);
+  const[isRetrying, setIsRetrying] = useState(false);
+  const [serviceQueue,setServiceQueue]=useState([]);
 
+  const TailwindToaster = () => {
+    return (
+      <Toaster position="top-right">
+        {(t) => (
+          <Transition
+            appear
+            show={t.visible}
+            as="div" // Add this line to use a div instead of Fragment
+            className="transform p-4 flex bg-white rounded shadow-lg"
+            enter="transition-all duration-150"
+            enterFrom="opacity-0 scale-50"
+            enterTo="opacity-100 scale-100"
+            leave="transition-all duration-150"
+            leaveFrom="opacity-100 scale-100"
+            leaveTo="opacity-0 scale-75"
+          >
+            <ToastIcon toast={t} />
+            <p className="px-2">{resolveValue(t.message)}</p>
+          </Transition>
+        )}
+      </Toaster>
+    );
+  };
 
+  const showToast = (type, message) => {
+    if (type == "success") toast.success(message);
+    if (type == "error") toast.error(message);
+  };
   const handleModelPerPageChange = (num) => {
     setitemsPerPage(num);
     setCurrentPage(1);
@@ -72,11 +104,25 @@ export default function Downloads() {
   }, [queueData,itemsPerPage]);
 
     useEffect(() => {
+      if (serviceQueue.length>0) {
+        console.log(serviceQueue)
+      }
+    }, [serviceQueue]);
+
+
+    useEffect(() => {
       const ws = new WebSocket("ws://192.168.18.17:8888/ws");
 
       ws.onmessage = (event) => {
         const newProgress = event.data;
-        setDownloadProgress(JSON.parse(newProgress));
+        const ws_data = JSON.parse(newProgress);
+        if(ws_data.flag ==="dl_progress"){
+          setDownloadProgress(JSON.parse(newProgress));
+        }
+        else if(ws_data.flag==="dl_queue"){
+          setServiceQueue(ws_data.data);
+        }
+
       };
 
       ws.onclose = () => {
@@ -88,25 +134,35 @@ export default function Downloads() {
 
 
   const handleDownload = async (id) => {
+    setIsRetrying(true);
     try {
       const res = await fetch(flask_url + "/download/new/" + id);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       console.log(data);
+      showToast("success","model will be added back to queue");
     } catch (error) {
       console.error("Error:", error);
+      showToast("success", "Error occured when retrying "+error);
+
     }
+    setIsRetrying(false);
   };
 
   const handleCancelDownload = async (id) => {
+    setIsCancelling(true);
     try {
       const res = await fetch(flask_url + "/download/delete/" + id);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       console.log(data);
+      showToast("success","Model is removed from download queue")
     } catch (error) {
       console.error("Error:", error);
+      showToast("error", "Error occured when removing model from queue "+error);
+
     }
+    setIsCancelling(false);
   };
   // Pagination logic
   const queuedItems = DlQueue.filter((x) => x.flag === "que");
@@ -261,6 +317,7 @@ export default function Downloads() {
             In Queue ({queuedItems.length})
           </h1>
         </div>
+        <TailwindToaster />
         <div className="grid min-[900px]:grid-cols-3 gap-4 mt-8">
           <div className="col-span-1 min-[900px]:col-span-2 space-y-4 order-2 min-[900px]:order-1 ">
             <div className="grid grid-col-1 sm:flex justify-center items-center sm:justify-start">
@@ -337,22 +394,32 @@ export default function Downloads() {
                   <div className="flex-col gap-6 ">
                     <button
                       onClick={() => handleCancelDownload(model._id)}
-                      className="inline-flex min-h-[3rem] w-full bg-stone-100 hover:bg-red-300 text-gray-900 font-semibold justify-center items-center  min-[900px]:justify-start rounded-md px-4 py-2 gap-2"
+                      className={`inline-flex min-h-[3rem] w-full ${
+                        isCancelling
+                          ? "bg-stone-300 text-gray-500"
+                          : "bg-stone-100 hover:bg-red-300 text-gray-900"
+                      } font-semibold justify-center items-center min-[900px]:justify-start rounded-md px-4 py-2 gap-2`}
+                      disabled={isCancelling}
                     >
-                      <TrashIcon className="w-8 h-8"></TrashIcon>
+                      <TrashIcon className="w-8 h-8" />
                       <span className="hidden md:inline-flex leading-none">
-                        Cancel
+                        {isCancelling ? "Cancelling..." : "Cancel"}
                       </span>
                     </button>
-                    <button
-                      className="inline-flex min-h-[3rem] w-full bg-stone-100 hover:bg-green-300 text-gray-900 font-semibold justify-center items-center  min-[900px]:justify-start  rounded-md px-4 py-2 gap-2"
-                      onClick={() => handleDownload(model._id)}
-                    >
-                      <ArrowPathIcon className="h-8 w-8" />
-                      <span className="hidden md:inline-flex leading-none">
-                        Retry
-                      </span>
-                    </button>
+                  <button
+                    className={`inline-flex min-h-[3rem] w-full ${
+                      isRetrying || serviceQueue.includes(model._id) 
+                        ? 'bg-stone-300 text-gray-500' 
+                        : 'bg-stone-100 hover:bg-green-300 text-gray-900'
+                    } font-semibold justify-center items-center min-[900px]:justify-start rounded-md px-4 py-2 gap-2`}
+                    onClick={() => handleDownload(model._id)}
+                    disabled={isRetrying || serviceQueue.includes(model._id)}
+                  >
+                    <ArrowPathIcon className="h-8 w-8" />
+                    <span className="hidden md:inline-flex leading-none">
+                      {isRetrying ? 'Retrying...' : serviceQueue.includes(model._id) ? 'In Queue...' : 'Retry'}
+                    </span>
+                  </button>
                   </div>
                 </div>
               </div>
@@ -386,15 +453,19 @@ export default function Downloads() {
                               Currently Downloading ...
                             </p>
                           </div>
-                          <div className="text-m font-light text-grey mt-1">
-                            <p className="text-right">
-                              {`${Number(
-                                downloadProgress.dled_size / 1000000
-                              ).toFixed(2)} MB / ${Number(
-                                downloadProgress.total_size / 1000000
-                              ).toFixed(2)} MB`}{" "}
-                            </p>
-                          </div>
+                          {downloadProgress ? (
+                            <div className="text-m font-light text-grey mt-1">
+                              <p className="text-right">
+                                {`${Number(
+                                  downloadProgress.dled_size / 1000000
+                                ).toFixed(2)} MB / ${Number(
+                                  downloadProgress.total_size / 1000000
+                                ).toFixed(2)} MB`}{" "}
+                              </p>
+                            </div>
+                          ) : (
+                            <div></div>
+                          )}
                         </div>
 
                         <div className="w-full bg-gray-200 rounded-full">

@@ -264,7 +264,7 @@ export default function ModelCard({
     // Render a countdown
     return (
       <span>
-        {hours}d : {hours}h : {minutes}m
+        {days}d : {hours}h : {minutes}m
       </span>
     );
   };
